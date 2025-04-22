@@ -14,7 +14,7 @@
                         </div>
                     @endif
 
-                    <p class="mb-3">Vul uw studentnummer in, en wij sturen een wachtwoord herstelmail naar het e-mailadres dat aan uw account is gekoppeld.</p>
+                    <p class="mb-3">Vul uw studentnummer in, en wij sturen een wachtwoord herstellink naar het e-mailadres dat aan uw account is gekoppeld.</p>
 
                     <form method="POST" action="{{ route('password.email') }}">
                         @csrf
@@ -37,7 +37,7 @@
                         <div class="row mb-0">
                             <div class="col-md-6 offset-md-4">
                                 <button type="submit" class="btn btn-primary">
-                                    {{ __('Verstuur herstelmail') }}
+                                    {{ __('Verstuur herstellink') }}
                                 </button>
                             </div>
                         </div>
