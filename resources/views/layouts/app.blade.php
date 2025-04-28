@@ -27,6 +27,14 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     @endif
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>
+        /* Hide elements with x-cloak before Alpine initializes */
+        [x-cloak] { display: none !important; }
+    </style>
 </head>
 
 <body>
@@ -105,6 +113,9 @@
             @yield('content')
         </main>
     </div>
+
+    <!-- Scripts -->
+    @stack('scripts')
 </body>
 
 </html>

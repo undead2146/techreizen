@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Education;
 use App\Models\Major;
-use App\Models\Cities;
+use App\Models\City;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Traveller;
@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 use Illuminate\Support\Str;
 use App\Mail\RegistrationConfirmationMail;
+use App\Models\Cities;
 use Illuminate\Support\Facades\Mail;
 
 class GuestRegistrationController extends Controller
@@ -95,17 +96,15 @@ class GuestRegistrationController extends Controller
     }
 
     // Show Personal Info Form
-    public function showPersonalInfoForm(Request $request)
+    public function showPersonalInfoForm()
     {
-        $registration = $request->session()->get(self::SESSION_KEY, ['step' => 1]);
-
-        if ($registration['step'] < 2) {
-            return redirect()->route('guest.registration.basic-info');
-        }
-
-        $cities = Cities::all();
-
-        return view('guest.registration.personal-info', ['registration' => (object) $registration, 'cities' => $cities]);
+        // Get registration data from session
+        $registration = session()->get('registration', new \stdClass());
+        
+        // Load all cities for the dropdown
+        $cities = \App\Models\Cities::orderBy('plaatsnaam')->get();
+        
+        return view('guest.registration.personal-info', compact('registration', 'cities'));
     }
 
     // Submit Personal Info Form
@@ -120,9 +119,17 @@ class GuestRegistrationController extends Controller
                 ->withInput();
         }
 
-        // Get current session data and update it with validated data
+        // Get current session data
         $registration = $request->session()->get(self::SESSION_KEY, []);
-        $registration = array_merge($registration, $validation['validated'], ['step' => 3]);
+        
+        // Explicitly ensure postcode is included
+        $validated = $validation['validated'];
+        if ($request->has('postcode')) {
+            $validated['postcode'] = $request->input('postcode');
+        }
+        
+        // Merge with existing data and set next step
+        $registration = array_merge($registration, $validated, ['step' => 3]);
 
         // Save updated data back to session
         $request->session()->put(self::SESSION_KEY, $registration);
@@ -196,14 +203,10 @@ class GuestRegistrationController extends Controller
             $existingUser = User::where('login', $registration['student_number'])->first();
 
             if ($existingUser) {
-                \Log::info("User with login {$registration['student_number']} already exists. Skipping user creation.");
-
                 // Check if the user already has a traveller record
                 $existingTraveller = Traveller::where('user_id', $existingUser->id)->first();
 
                 if ($existingTraveller) {
-                    \Log::info("Traveller record for {$registration['student_number']} already exists. Registration complete.");
-
                     // Clear the registration data from session
                     $request->session()->forget(self::SESSION_KEY);
 
@@ -230,22 +233,47 @@ class GuestRegistrationController extends Controller
                 DB::statement("ALTER TABLE users AUTO_INCREMENT = 1");
                 // Create the user record
                 $user = User::create($userData);
-                \Log::info("Created new user with login: {$registration['student_number']}");
 
                 // We'll need to send the password email after traveller creation
                 $shouldSendEmail = true;
             }
+
+            // Find city record using city name and postal code
+            $cityName = $registration['city'] ?? null;
+            $postalCode = $registration['postcode'] ?? null;
+
+            if (!$cityName) {
+                throw new \Exception("Missing city name in registration data");
+            }
+
+            // Try to find the city record
+            $city = null;
+
+            // First, try exact match on both city name and postal code
+            if ($postalCode) {
+                $city = Cities::where('plaatsnaam', $cityName)
+                            ->where('postcode', $postalCode)
+                            ->first();
+            }
+
+            // If not found, try by name only
+            if (!$city) {
+                $city = Cities::where('plaatsnaam', $cityName)->first();
+            }
+
+
 
             // Get the major ID based on name and education
             $major = Major::where('name', $registration['major'])
                 ->where('education_id', $registration['education'])
                 ->first();
             $majorId = $major ? $major->id : 1; // Default to 1 if not found
+            
             // Create the traveller record matching the database schema
             $travellerData = [
                 'user_id' => $user->id,
-                'trip_id' => Trip::where('name', $registration['trip'])->value('id'), // set trip_id based on trip name
-                'zip_id' => 3000, // Default value
+                'trip_id' => Trip::where('name', $registration['trip'])->value('id'),
+                'zip_id' => $city->id,
                 'major_id' => $majorId,
                 'first_name' => $registration['first_name'],
                 'last_name' => $registration['last_name'],
@@ -264,8 +292,7 @@ class GuestRegistrationController extends Controller
                 'medical_issue' => $registration['medical_info'] === 'yes' ? 1 : 0,
                 'medical_info' => $registration['medical_info'] === 'yes' ? $registration['medical_details'] : '',
                 'created_at' => now(),
-                'updated_at' => now(),
-                 // from basic-info form
+                'updated_at' => now(),  
             ];
 
             //this is for when u delete a user in the database, the id will be reset to 1
@@ -273,14 +300,12 @@ class GuestRegistrationController extends Controller
             DB::statement("ALTER TABLE travellers AUTO_INCREMENT = 1");
             // Use direct DB insertion to avoid model validation issues
             DB::table('travellers')->insert($travellerData);
-            \Log::info("Created traveller record for: {$registration['first_name']} {$registration['last_name']}");
 
             // Send the confirmation email with login credentials if this is a new user
             if (isset($shouldSendEmail)) {
                 Mail::to($registration['email'])->send(new RegistrationConfirmationMail(
                     (object) array_merge($registration, ['password' => $password])
                 ));
-                \Log::info("Sent registration confirmation email to: {$registration['email']}");
             }
 
             // Clear the registration data from session
@@ -301,7 +326,6 @@ class GuestRegistrationController extends Controller
         catch (\Exception $e) {
             // Log the error and show a generic message
             \Log::error("Registration error: " . $e->getMessage());
-            \Log::error("Stack trace: " . $e->getTraceAsString());
 
             return redirect()->route('login')
                 ->with('error', 'Er is een fout opgetreden bij uw registratie. Neem contact op met de beheerder.');

@@ -1,4 +1,3 @@
-
 @extends('layouts.app')
 
 @section('content')
@@ -132,32 +131,26 @@
                                 <div class="row mb-3">
                                     <label for="city" class="col-md-4 col-form-label text-md-end">{{ __('Gemeente*') }}</label>
                                     <div class="col-md-6">
-                                        <select id="city" class="form-control select2 @error('city') is-invalid @enderror" name="city" required>
-                                            <option value="">{{ __('-- Selecteer Gemeente --') }}</option>
-                                            @foreach ($cities as $city)
-                                                <option value="{{ $city->plaatsnaam }}" {{ (old('city', $registration->city ?? '') == $city->plaatsnaam) ? 'selected' : '' }}>
-                                                    {{ $city->plaatsnaam }}
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                        <div class="city-selector-wrapper">
+                                            <x-city-selector 
+                                                :selected-city="old('city', $registration->city ?? '')"
+                                                :selected-postal-code="old('postcode', $registration->postcode ?? '')"
+                                                :has-error="$errors->has('city')" 
+                                                required
+                                            />
+                                        </div>
+                                        <div class="form-text">Zoek een gemeente of voeg er een toe</div>
+                                        
                                         @error('city')
-                                            <span class="invalid-feedback" role="alert">
+                                            <span class="invalid-feedback d-block" role="alert">
                                                 <strong>{{ $message }}</strong>
                                             </span>
                                         @enderror
                                     </div>
                                 </div>
 
-                                @push('scripts')
-                                    <script>
-                                        $(document).ready(function() {
-                                            $('#city').select2({
-                                                placeholder: "{{ __('-- Selecteer Gemeente --') }}",
-                                                allowClear: true
-                                            });
-                                        });
-                                    </script>
-                                @endpush
+                                
+
 
                                 <div class="row mb-3">
                                     <label for="country" class="col-md-4 col-form-label text-md-end">{{ __('Land*') }}</label>
@@ -189,4 +182,79 @@
                 </div>
             </div>
         </div>
+
+        <!-- Success notification -->
+        <div 
+            id="cityAddedToast" 
+            class="toast position-fixed bottom-0 end-0 m-3" 
+            role="alert" 
+            aria-live="assertive" 
+            aria-atomic="true"
+            data-bs-delay="3000"
+        >
+            <div class="toast-header bg-success text-white">
+                <strong class="me-auto">Succes</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                Gemeente succesvol toegevoegd!
+            </div>
+        </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Listen for city-added event to show success toast
+        window.addEventListener('city-added', event => {
+            const toastEl = document.getElementById('cityAddedToast');
+            if (toastEl) {
+                const toast = new bootstrap.Toast(toastEl);
+                toast.show();
+            }
+        });
+        
+        // Fix for form submission with city selector
+        const form = document.querySelector('form[action="{{ route('guest.registration.personal-info.submit') }}"]');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // Check specifically for the city field
+                const cityInput = form.querySelector('input[name="city"]');
+                if (cityInput && cityInput.hasAttribute('required') && !cityInput.value.trim()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Make the city selector appear invalid
+                    const cityWrapper = cityInput.closest('.city-selector-wrapper');
+                    if (cityWrapper) {
+                        const searchInput = cityWrapper.querySelector('.search-input');
+                        if (searchInput) {
+                            searchInput.classList.add('is-invalid');
+                            searchInput.focus();
+                        }
+                    }
+                    
+                    // Show validation message
+                    alert('Selecteer een gemeente voordat u verder gaat.');
+                    return false;
+                }
+                
+                // Disable all inputs in modals that might be focusable
+                document.querySelectorAll('.city-modal-container input').forEach(input => {
+                    input.disabled = true;
+                });
+            });
+        }
+    });
+</script>
+
+<style>
+    .city-selector-wrapper {
+        position: relative;
+    }
+    
+    [x-cloak] { 
+        display: none !important; 
+    }
+</style>
+@endpush

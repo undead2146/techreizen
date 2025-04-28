@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\LoginController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\GuestRegistrationController;
+use App\Http\Controllers\api\CityController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -47,11 +48,18 @@ Route::middleware(['auth', 'user-access:guest'])->group(function () {
             ->name('guest.registration.confirmation');
         Route::post('/confirmation', [GuestRegistrationController::class, 'submitConfirmation'])
             ->name('guest.registration.confirmation.submit');
+
     });
 
     Route::get('/register', function () {
         return redirect()->route('guest.disclaimer');
     })->name('register');
+});
+
+// API Routes for city selection - moved outside auth middleware to be accessible
+Route::prefix('api')->group(function () {
+    Route::get('/cities/search', [App\Http\Controllers\Api\CityController::class, 'search'])->name('api.cities.search');
+    Route::post('/cities', [App\Http\Controllers\Api\CityController::class, 'store'])->name('api.cities.store');
 });
 
 /*------------------------------------------
