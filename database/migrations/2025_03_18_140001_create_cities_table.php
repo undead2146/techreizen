@@ -11,7 +11,8 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('cities', function (Blueprint $table) {
-            $table->integer('postcode');
+            $table->id();
+            $table->string('postcode');
             $table->string('plaatsnaam');
             $table->string('provincie');
             $table->timestamps();
