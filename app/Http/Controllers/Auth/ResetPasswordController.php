@@ -30,7 +30,7 @@ class ResetPasswordController extends Controller
 
     use ResetsPasswords;
 
-    protected $redirectTo = '/';
+    protected $redirectTo = '/traveller/home';
 
     /**
      * Reset the user's password.
@@ -116,7 +116,7 @@ class ResetPasswordController extends Controller
      */
     protected function sendResetResponse(Request $request, $response)
     {
-        return redirect(route('traveller.home'))
+        return redirect($this->redirectPath())
             ->with('status', 'Uw wachtwoord is succesvol gewijzigd!');
     }
 
