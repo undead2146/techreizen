@@ -200,6 +200,24 @@
                 Gemeente succesvol toegevoegd!
             </div>
         </div>
+
+        <!-- City Found notification -->
+        <div 
+            id="cityFoundToast" 
+            class="toast position-fixed bottom-0 end-0 m-3" 
+            role="alert" 
+            aria-live="assertive" 
+            aria-atomic="true"
+            data-bs-delay="3000"
+        >
+            <div class="toast-header bg-info text-white">
+                <strong class="me-auto">Informatie</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                Deze gemeente bestaat al en is geselecteerd.
+            </div>
+        </div>
 @endsection
 
 @push('scripts')
@@ -208,6 +226,15 @@
         // Listen for city-added event to show success toast
         window.addEventListener('city-added', event => {
             const toastEl = document.getElementById('cityAddedToast');
+            if (toastEl) {
+                const toast = new bootstrap.Toast(toastEl);
+                toast.show();
+            }
+        });
+        
+        // Listen for city-found event to show info toast
+        window.addEventListener('city-found', event => {
+            const toastEl = document.getElementById('cityFoundToast');
             if (toastEl) {
                 const toast = new bootstrap.Toast(toastEl);
                 toast.show();

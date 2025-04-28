@@ -71,7 +71,7 @@
                         <i class="fas fa-map-marker-alt"></i>
                         <p>Geen gemeenten gevonden voor "<span x-text="searchQuery"></span>"</p>
                     </div>
-                    <button class="create-new-btn" @click="showAddCityModal = true">
+                    <button type="button" class="create-new-btn" @click.prevent="showAddCityModal = true">
                         <i class="fas fa-plus-circle"></i> Nieuwe gemeente toevoegen
                     </button>
                 </div>
@@ -745,11 +745,14 @@ document.addEventListener('alpine:init', () => {
                     this.newPostalCode = '';
                     this.newProvince = '';
                     
-                    // Only show success message if it was actually created (status 201), not found (status 200)
+                    // Dispatch appropriate event based on status code
                     const isNewlyCreated = response.status === 201;
                     if (isNewlyCreated) {
-                        // Dispatch event for success notification
                         window.dispatchEvent(new CustomEvent('city-added', { 
+                            detail: { city: newCity }
+                        }));
+                    } else {
+                        window.dispatchEvent(new CustomEvent('city-found', { 
                             detail: { city: newCity }
                         }));
                     }

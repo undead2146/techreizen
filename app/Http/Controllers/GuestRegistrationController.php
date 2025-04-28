@@ -98,13 +98,13 @@ class GuestRegistrationController extends Controller
     // Show Personal Info Form
     public function showPersonalInfoForm()
     {
-        // Get registration data from session
-        $registration = session()->get('registration', new \stdClass());
+        // Get registration data from session using the correct session key
+        $registration = session()->get(self::SESSION_KEY, []);
         
         // Load all cities for the dropdown
         $cities = \App\Models\Cities::orderBy('plaatsnaam')->get();
         
-        return view('guest.registration.personal-info', compact('registration', 'cities'));
+        return view('guest.registration.personal-info', ['registration' => (object) $registration, 'cities' => $cities]);
     }
 
     // Submit Personal Info Form
