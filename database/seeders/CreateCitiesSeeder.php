@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\cities;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class CreateCitiesSeeder extends Seeder
@@ -13,6 +14,8 @@ class CreateCitiesSeeder extends Seeder
      */
     public function run(): void
     {
+
+
         Log::info('Starting the seeding process for cities.');
 
         $filePath = base_path('database/Data/zipcodes.csv');
@@ -25,21 +28,28 @@ class CreateCitiesSeeder extends Seeder
 
             $formattedCities = array_map(function ($city) {
                 return [
-                    'Plaatsnaam' => $city['Plaatsnaam'],
-                    'Postcode' => $city['Postcode'],
-                    'Provincie' => $city['Provincie'],
+                    'plaatsnaam' => $city['Plaatsnaam'],
+                    'postcode' => $city['Postcode'],
+                    'provincie' => $city['Provincie'],
                 ];
             }, $cities);
 
-            Log::info('Inserting data into the cities table.', ['count' => count($formattedCities)]);
-            //DB::table('cities')->insert($formattedCities);
-            foreach ($formattedCities as $cities) {
-                Cities::create($cities);
-            }
+            
+            // Use batch insert with chunks of 500 records
+            $chunks = array_chunk($formattedCities, 500);
+                        
+            DB::transaction(function() use ($chunks) {
+                foreach ($chunks as $index => $chunk) {
+                    DB::table('cities')->insert($chunk);
+                    Log::info("Inserted chunk " . ($index + 1) . " of " . count($chunks));
+                }
+            });
+
             Log::info('Data inserted successfully.');
         } else {
             Log::warning('No data found in the CSV file or the file could not be read.');
         }
+                
     }
 
     /**
