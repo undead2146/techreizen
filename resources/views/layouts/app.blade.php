@@ -16,7 +16,7 @@
 
     <!-- Scripts -->
     @php
-        $viteManifestExists = file_exists(public_path('build/manifest.json'));
+$viteManifestExists = file_exists(public_path('build/manifest.json'));
     @endphp
     
     @if($viteManifestExists)
@@ -79,21 +79,30 @@
                                 </li>
                             @endif
                         @else
-                            @if (Auth::user()->role === 'guest' && Route::has('register'))
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('register') }}">{{ __('Register') }}</a>
+                            <!-- Alleen tonen als de gebruiker een traveller is -->
+                            @if (Auth::user()->role === 'traveller')
+                                <!-- Mijn Reis Dropdown -->
+                                <li class="nav-item dropdown">
+                                    <a id="myTripDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                                        aria-haspopup="true" aria-expanded="false">
+                                        {{ __('Mijn Reis') }}
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="myTripDropdown">
+                                        <a class="dropdown-item" >{{ __('Groepen') }}</a>
+                                        <!-- Voeg hier meer items toe als nodig -->
+                                    </div>
                                 </li>
                             @endif
 
+                            <!-- User Dropdown -->
                             <li class="nav-item dropdown">
-                                <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button"
-                                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
+                                <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                                    aria-haspopup="true" aria-expanded="false" v-pre>
                                     {{ Auth::user()->name ?? Auth::user()->login }}
                                 </a>
 
                                 <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                    <a class="dropdown-item" href="{{ route('logout') }}"
-                                        onclick="event.preventDefault();
+                                    <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault();
                                                      document.getElementById('logout-form').submit();">
                                         {{ __('Logout') }}
                                     </a>

@@ -102,7 +102,7 @@ class GuestRegistrationController extends Controller
         $registration = session()->get(self::SESSION_KEY, []);
         
         // Load all cities for the dropdown
-        $cities = \App\Models\Cities::orderBy('plaatsnaam')->get();
+        $cities = Cities::orderBy('plaatsnaam')->get();
         
         return view('guest.registration.personal-info', ['registration' => (object) $registration, 'cities' => $cities]);
     }
