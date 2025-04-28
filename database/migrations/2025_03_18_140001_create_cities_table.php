@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->string('postcode');
             $table->string('plaatsnaam');
-            $table->string('provincie');
+            $table->string('provincie')->nullable();
             $table->timestamps();
         });
     }
