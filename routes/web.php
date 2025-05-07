@@ -70,6 +70,9 @@ All traveller Routes List
 Route::middleware(['auth', 'user-access:traveller'])->group(function () {
 
     Route::get('/traveller/home', [HomeController::class, 'travellerHome'])->name('traveller.home');
+    Route::get('/traveller/groups', function () {
+        return view('auth.traveller.groups');
+    })->name('traveller.groups');
 });
 
 /*------------------------------------------

@@ -15,9 +15,9 @@ class CreateGroupsSeeder extends Seeder
     public function run(): void
     {
         $groups = [
-            ['name' => 'Group A'],
-            ['name' => 'Group B'],
-            ['name' => 'Group C'],
+            ['name' => 'Group A', 'max_members' => 10],
+            ['name' => 'Group B', 'max_members' => 15],
+            ['name' => 'Group C', 'max_members' => 20],
         ];
 
         foreach ($groups as $group) {

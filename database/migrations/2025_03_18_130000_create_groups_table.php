@@ -13,8 +13,9 @@ return new class extends Migration
     {
         Schema::create('groups', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique();
             $table->foreign('id')->references('id')->on('trips')->onDelete('cascade');
+            $table->string('name')->unique();
+            $table->integer('max_members')->length(10);
             $table->timestamps();
         });
     }
