@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             CreateEducationsSeeder::class,
             CreateMajorsSeeder::class,
             CreateCitiesSeeder::class,
+            CreateGroupsSeeder::class,
             // Add other seeders here if needed
         ]);
 
