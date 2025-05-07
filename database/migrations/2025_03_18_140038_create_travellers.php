@@ -21,7 +21,7 @@ return new class extends Migration
             $table->foreign('zip_id')->references('id')->on('cities')->onDelete('cascade');
             $table->unsignedBigInteger('group_id')->length(10)->nullable();
             $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade');
-            $table->integer('major_id')->length(10);
+            $table->integer('major_id')->length(10)->nullable();
             $table->string('first_name');
             $table->string('last_name');
             $table->string('email');
@@ -30,14 +30,14 @@ return new class extends Migration
             $table->string('gender');
             $table->string('phone');
             $table->string('emergency_phone_1');
-            $table->string('emergency_phone_2');
+            $table->string('emergency_phone_2')->nullable();
             $table->string('nationality');
             $table->date('birthdate');
             $table->string('birthplace');
             $table->string('iban');
             $table->string('bic');
-            $table->tinyInteger('medical_issue');
-            $table->string('medical_info');
+            $table->tinyInteger('medical_issue')->nullable();
+            $table->string('medical_info')->nullable();
             $table->string('remember_token', 100)->nullable();
             $table->timestamps();
         });

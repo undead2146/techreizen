@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Artisan;
 
 class DatabaseSeeder extends Seeder
 {
@@ -20,8 +20,9 @@ class DatabaseSeeder extends Seeder
             CreateEducationsSeeder::class,
             CreateMajorsSeeder::class,
             CreateCitiesSeeder::class,
+            CreateTravellersSeeder::class,
             CreateGroupsSeeder::class,
-            // Add other seeders here if needed
+            CreateGroupMembersSeeder::class,
         ]);
 
         // User::factory(10)->create();

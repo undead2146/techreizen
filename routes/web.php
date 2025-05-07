@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\GuestRegistrationController;
 use App\Http\Controllers\api\CityController;
+use App\Http\Controllers\GroupController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -68,11 +69,15 @@ All traveller Routes List
 --------------------------------------------
 --------------------------------------------*/
 Route::middleware(['auth', 'user-access:traveller'])->group(function () {
-
     Route::get('/traveller/home', [HomeController::class, 'travellerHome'])->name('traveller.home');
-    Route::get('/traveller/groups', function () {
-        return view('auth.traveller.groups');
-    })->name('traveller.groups');
+    
+    // Group routes for travelers
+    Route::prefix('traveller')->group(function () {
+        Route::get('/groups', [GroupController::class, 'index'])->name('groups.index');
+        Route::get('/groups/{group}', [GroupController::class, 'show'])->name('groups.show');
+        Route::post('/groups/{group}/join', [GroupController::class, 'join'])->name('groups.join');
+        Route::delete('/groups/{group}/leave', [GroupController::class, 'leave'])->name('groups.leave');
+    });
 });
 
 /*------------------------------------------
@@ -81,8 +86,19 @@ All Guide Routes List
 --------------------------------------------
 --------------------------------------------*/
 Route::middleware(['auth', 'user-access:guide'])->group(function () {
-
     Route::get('/guide/home', [HomeController::class, 'guideHome'])->name('guide.home');
+    
+    // Guide uses the same groups.index route as travelers for consistency
+    Route::get('/guide/groups', [GroupController::class, 'index'])->name('guide.groups.index');
+    
+    // Group management routes for guides (create/edit/delete)
+    Route::get('/guide/groups/create', [GroupController::class, 'create'])->name('groups.create');
+    Route::post('/guide/groups', [GroupController::class, 'store'])->name('groups.store');
+    Route::get('/guide/groups/{group}', [GroupController::class, 'show'])->name('guide.groups.show');
+    Route::get('/guide/groups/{group}/edit', [GroupController::class, 'edit'])->name('groups.edit');
+    Route::put('/guide/groups/{group}', [GroupController::class, 'update'])->name('groups.update');
+    Route::delete('/guide/groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy');
+    Route::delete('/guide/groups/{group}/traveller/{traveller}', [GroupController::class, 'removeTraveller'])->name('groups.remove-traveller');
 });
 
 /*------------------------------------------
