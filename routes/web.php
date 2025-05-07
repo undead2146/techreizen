@@ -86,6 +86,9 @@ All Guide Routes List
 --------------------------------------------
 --------------------------------------------*/
 Route::middleware(['auth', 'user-access:guide'])->group(function () {
+    
+    Route::get('/', [HomeController::class, 'guideHome'])->name('guide.home');
+
     Route::get('/guide/home', [HomeController::class, 'guideHome'])->name('guide.home');
     
     // Guide uses the same groups.index route as travelers for consistency
