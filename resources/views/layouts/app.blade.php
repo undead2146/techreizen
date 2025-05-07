@@ -88,8 +88,7 @@ $viteManifestExists = file_exists(public_path('build/manifest.json'));
                                         {{ __('Mijn Reis') }}
                                     </a>
                                     <div class="dropdown-menu dropdown-menu-end" aria-labelledby="myTripDropdown">
-                                        <a class="dropdown-item" >{{ __('Groepen') }}</a>
-                                        <!-- Voeg hier meer items toe als nodig -->
+                                        <a class="dropdown-item" href="{{ route('traveller.groups') }}">{{ __('Groepen') }}</a>
                                     </div>
                                 </li>
                             @endif
