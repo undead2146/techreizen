@@ -19,6 +19,8 @@ return new class extends Migration
             $table->foreign('trip_id')->references('id')->on('trips')->onDelete('cascade'); // Foreign key constraint
             $table->unsignedBigInteger('zip_id')->length(10);
             $table->foreign('zip_id')->references('id')->on('cities')->onDelete('cascade');
+            $table->unsignedBigInteger('group_id')->length(10);
+            $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade');
             $table->integer('major_id')->length(10);
             $table->string('first_name');
             $table->string('last_name');

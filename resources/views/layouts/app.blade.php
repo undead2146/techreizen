@@ -54,9 +54,19 @@ $viteManifestExists = file_exists(public_path('build/manifest.json'));
     <div> <!-- Removed margin-top to allow natural scrolling -->
         <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
             <div class="container">
-                <a class="navbar-brand" href="{{ url('/') }}">
-                    {{ config('app.name', 'Laravel') }}
-                </a>
+                @if (Auth::check() && Auth::user()->role === 'traveller')
+                    <a class="navbar-brand" href="{{ url('/traveller/home') }}">
+                        Home
+                    </a>
+                @elseif (Auth::check() && Auth::user()->role === 'guest')
+                    <a class="navbar-brand" href="{{ url('/') }}">
+                        Home
+                    </a>
+                @else
+                    <a class="navbar-brand" href="{{ url('/') }}">
+                        {{ config('app.name', 'Laravel') }}
+                    </a>
+                @endif
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                     data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
                     aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
