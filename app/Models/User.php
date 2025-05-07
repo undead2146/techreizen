@@ -23,29 +23,8 @@ class User extends Authenticatable implements CanResetPassword
      */
     protected $fillable = [
         'login',
-        'name',
-        'email',
         'password',
         'role',
-        'first_name',
-        'last_name',
-        // Additional fields
-        'phone',
-        'emergency_contact',
-        'optional_emergency_contact',
-        'medical_info',
-        'medical_details',
-        'gender',
-        'nationality',
-        'date_of_birth',
-        'place_of_birth',
-        'address',
-        'city',
-        'country',
-        'trip',
-        'student_number',
-        'education',
-        'major',
     ];
 
     /**
