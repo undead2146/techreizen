@@ -27,6 +27,7 @@ class Traveller extends Model
         'trip_id',
         'zip_id',
         'major_id',
+        'group_id',
         'first_name',
         'last_name',
         'email',
@@ -68,5 +69,74 @@ class Traveller extends Model
             'birthdate' => 'date',
             'medical_issue' => 'boolean',
         ];
+    }
+    
+    /**
+     * Get the user associated with this traveller
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+    
+    /**
+     * Get the trip this traveller belongs to
+     */
+    public function trip()
+    {
+        return $this->belongsTo(Trip::class);
+    }
+    
+    /**
+     * Get the groups this traveller is a member of
+     */
+    public function groups()
+    {
+        return $this->belongsToMany(Group::class, 'group_members', 'traveller_id', 'group_id')->withTimestamps();
+    }
+    
+    /**
+     * Get the group this traveller belongs to
+     */
+    public function group()
+    {
+        return $this->belongsTo(Group::class);
+    }
+    
+    /**
+     * Check if traveller can manage groups (has a user with guide or admin role)
+     */
+    public function canManageGroups()
+    {
+        return $this->user && in_array($this->user->role, ['guide', 'admin']);
+    }
+    
+    /**
+     * Check if traveller is in any group
+     */
+    public function hasGroup()
+    {
+        return !is_null($this->group_id);
+    }
+    
+    /**
+     * Join a group
+     */
+    public function joinGroup(Group $group)
+    {
+        if (!$group->isFull()) {
+            $this->group_id = $group->id;
+            return $this->save();
+        }
+        return false;
+    }
+    
+    /**
+     * Leave current group
+     */
+    public function leaveGroup()
+    {
+        $this->group_id = null;
+        return $this->save();
     }
 }
