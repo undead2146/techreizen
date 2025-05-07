@@ -222,11 +222,15 @@ class GuestRegistrationController extends Controller
                 // Generate a secure random password
                 $password = Str::random(10);
 
+                // Determine role based on student number prefix (U = guide, others = traveller)
+                $studentNumber = $registration['student_number'];
+                $role = (Str::startsWith(strtoupper($studentNumber), 'U')) ? 'guide' : 'traveller';
+
                 // Create user with the fields that exist in the users table
                 $userData = [
-                    'login' => $registration['student_number'],
+                    'login' => $studentNumber,
                     'password' => Hash::make($password),
-                    'role' => 'traveller',
+                    'role' => $role // Set role based on the student number prefix
                 ];
 
                 // Reset AUTO_INCREMENT value for users table to avoid id gaps
@@ -260,8 +264,6 @@ class GuestRegistrationController extends Controller
             if (!$city) {
                 $city = Cities::where('plaatsnaam', $cityName)->first();
             }
-
-
 
             // Get the major ID based on name and education
             $major = Major::where('name', $registration['major'])
@@ -303,8 +305,14 @@ class GuestRegistrationController extends Controller
 
             // Send the confirmation email with login credentials if this is a new user
             if (isset($shouldSendEmail)) {
+                $roleDescription = $user->role === 'guide' ? 'begeleider' : 'reiziger';
+                
                 Mail::to($registration['email'])->send(new RegistrationConfirmationMail(
-                    (object) array_merge($registration, ['password' => $password])
+                    (object) array_merge($registration, [
+                        'password' => $password,
+                        'role' => $user->role,
+                        'role_description' => $roleDescription
+                    ])
                 ));
             }
 
@@ -317,10 +325,14 @@ class GuestRegistrationController extends Controller
             $request->session()->regenerateToken();
 
             // Redirect to login page with success message and pre-filled data
+            $roleMessage = $user->role === 'guide' 
+                ? 'U bent geregistreerd als begeleider.' 
+                : 'U bent geregistreerd als reiziger.';
+                
             return redirect()->route('login')
                 ->with('registration_complete', true)
                 ->with('login', $registration['student_number'])
-                ->with('success', 'Uw registratie is succesvol verwerkt! Een e-mail met uw inloggegevens is verzonden naar ' . $registration['email'] . '. Controleer uw inbox om uw account te activeren.');
+                ->with('success', 'Uw registratie is succesvol verwerkt! ' . $roleMessage . ' Een e-mail met uw inloggegevens is verzonden naar ' . $registration['email'] . '. Controleer uw inbox om uw account te activeren.');
 
         } 
         catch (\Exception $e) {
