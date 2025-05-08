@@ -14,6 +14,18 @@ Route::get('/majors/{educationId}', [GuestRegistrationController::class, 'getMaj
 
 Auth::routes();
 
+// API Routes for city selection - moved outside auth middleware to be accessible
+Route::prefix('api')->group(function () {
+    Route::get('/cities/search', [App\Http\Controllers\Api\CityController::class, 'search'])->name('api.cities.search');
+    Route::post('/cities', [App\Http\Controllers\Api\CityController::class, 'store'])->name('api.cities.store');
+});
+
+// Common group routes accessible to both travelers and guides
+Route::middleware(['auth'])->group(function () {
+    Route::get('/groups', [GroupController::class, 'index'])->name('groups.index');
+    Route::get('/groups/{group}', [GroupController::class, 'show'])->name('groups.show');
+});
+
 /*------------------------------------------
 --------------------------------------------
 All guest Routes List
@@ -24,6 +36,8 @@ Route::middleware(['auth', 'user-access:guest'])->group(function () {
     Route::get('/disclaimerPage', [HomeController::class, 'disclaimerPage'])->name('guest.disclaimer');
     Route::post('/disclaimerPage', [HomeController::class, 'acceptDisclaimer'])->name('guest.disclaimer.accept');
 
+    Route::get('/guest/home', [HomeController::class, 'index'])->name('welcome');
+    
     // Guest Registration Routes 
     Route::prefix('registration')->group(function () {
         // Step 1: Basic Info
@@ -57,12 +71,6 @@ Route::middleware(['auth', 'user-access:guest'])->group(function () {
     })->name('register');
 });
 
-// API Routes for city selection - moved outside auth middleware to be accessible
-Route::prefix('api')->group(function () {
-    Route::get('/cities/search', [App\Http\Controllers\Api\CityController::class, 'search'])->name('api.cities.search');
-    Route::post('/cities', [App\Http\Controllers\Api\CityController::class, 'store'])->name('api.cities.store');
-});
-
 /*------------------------------------------
 --------------------------------------------
 All traveller Routes List
@@ -71,13 +79,9 @@ All traveller Routes List
 Route::middleware(['auth', 'user-access:traveller'])->group(function () {
     Route::get('/traveller/home', [HomeController::class, 'travellerHome'])->name('traveller.home');
     
-    // Group routes for travelers
-    Route::prefix('traveller')->group(function () {
-        Route::get('/groups', [GroupController::class, 'index'])->name('groups.index');
-        Route::get('/groups/{group}', [GroupController::class, 'show'])->name('groups.show');
-        Route::post('/groups/{group}/join', [GroupController::class, 'join'])->name('groups.join');
-        Route::delete('/groups/{group}/leave', [GroupController::class, 'leave'])->name('groups.leave');
-    });
+    // Traveler-specific group actions
+    Route::post('/groups/{group}/join', [GroupController::class, 'join'])->name('groups.join');
+    Route::delete('/groups/{group}/leave', [GroupController::class, 'leave'])->name('groups.leave');
 });
 
 /*------------------------------------------
@@ -87,21 +91,21 @@ All Guide Routes List
 --------------------------------------------*/
 Route::middleware(['auth', 'user-access:guide'])->group(function () {
     
-    Route::get('/', [HomeController::class, 'guideHome'])->name('guide.home');
 
     Route::get('/guide/home', [HomeController::class, 'guideHome'])->name('guide.home');
     
-    // Guide uses the same groups.index route as travelers for consistency
-    Route::get('/guide/groups', [GroupController::class, 'index'])->name('guide.groups.index');
-    
-    // Group management routes for guides (create/edit/delete)
+    // Guide-specific group management routes
+    Route::get('/guide/groups', [GroupController::class, 'guideIndex'])->name('guide.groups.index');
     Route::get('/guide/groups/create', [GroupController::class, 'create'])->name('groups.create');
     Route::post('/guide/groups', [GroupController::class, 'store'])->name('groups.store');
-    Route::get('/guide/groups/{group}', [GroupController::class, 'show'])->name('guide.groups.show');
     Route::get('/guide/groups/{group}/edit', [GroupController::class, 'edit'])->name('groups.edit');
     Route::put('/guide/groups/{group}', [GroupController::class, 'update'])->name('groups.update');
     Route::delete('/guide/groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy');
+    Route::post('/guide/groups/{group}/add-member', [GroupController::class, 'addMember'])->name('groups.add-member');
     Route::delete('/guide/groups/{group}/traveller/{traveller}', [GroupController::class, 'removeTraveller'])->name('groups.remove-traveller');
+    
+    // Add toggle lock route
+    Route::post('/guide/groups/{group}/toggle-lock', [GroupController::class, 'toggleLock'])->name('groups.toggle-lock');
 });
 
 /*------------------------------------------
