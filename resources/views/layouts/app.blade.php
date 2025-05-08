@@ -140,11 +140,11 @@
     <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
         <div class="container">
             @if (Auth::check() && Auth::user()->role === 'traveller')
-                <a class="navbar-brand" href="{{ url('/traveller/home') }}">Home</a>
+                <a class="navbar-brand" href="{{ url('/traveller/home') }}">Techreizen</a>
             @elseif (Auth::check() && Auth::user()->role === 'guest')
-                <a class="navbar-brand" href="{{ url('/') }}">Home</a>
+                <a class="navbar-brand" href="{{ url('/guest/home') }}">Techreizen</a>
             @else
-                <a class="navbar-brand" href="{{ url('/') }}">{{ config('app.name', 'Laravel') }}</a>
+                <a class="navbar-brand" href="{{ url('/') }}">{{ config('app.name', 'home') }}</a>
             @endif
             
             <!-- Always visible navigation - removed collapse classes -->
@@ -179,9 +179,6 @@
                                     <a class="dropdown-item" href="{{ route('groups.index') }}">
                                         <i class="fas fa-users mr-2"></i>{{ __('Mijn Groepen') }}
                                     </a>
-                                    <a class="dropdown-item" href="#">
-                                        <i class="fas fa-clipboard-list mr-2"></i>{{ __('Reisschema') }}
-                                    </a>
                                 </div>
                             </li>
                         @elseif(Auth::user()->role === 'guide' || Auth::user()->role === 'admin')
@@ -207,6 +204,16 @@
                             </li>
                         @endif
 
+                        @if (Auth::user()->role === 'guest' && Route::has('register'))
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('register') }}">
+                                    <div class="nav-btn nav-btn-green">
+                                        <i class="fas fa-user-plus mr-2"></i>{{ __('Register') }}
+                                    </div>
+                                </a>
+                            </li>
+                        @endif
+
                         <li class="nav-item dropdown">
                             <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="nav-btn nav-btn-gray nav-btn-dropdown">
@@ -228,22 +235,6 @@
                                 </form>
                             </div>
                         </li>
-
-
-
-                        
-
-                        @if (Auth::user()->role === 'guest' && Route::has('register'))
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('register') }}">
-                                    <div class="nav-btn nav-btn-green">
-                                        <i class="fas fa-user-plus mr-2"></i>{{ __('Register') }}
-                                    </div>
-                                </a>
-                            </li>
-                        @endif
-
-                        
                     @endguest
                 </ul>
             </div>

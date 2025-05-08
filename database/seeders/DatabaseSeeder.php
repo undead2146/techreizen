@@ -20,9 +20,9 @@ class DatabaseSeeder extends Seeder
             CreateEducationsSeeder::class,
             CreateMajorsSeeder::class,
             CreateCitiesSeeder::class,
-            CreateTravellersSeeder::class,
             CreateGroupsSeeder::class,
-            CreateGroupMembersSeeder::class,
+            CreateTravellersSeeder::class,
+            // CreateGroupMembersSeeder::class,
         ]);
 
         // User::factory(10)->create();
