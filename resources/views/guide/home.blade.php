@@ -31,7 +31,7 @@
                         </div>
                     @endif
                     <h2>
-                        {{ __('You are a visitor!') }}
+                        {{ __('You are a guide!') }}
                     </h2>
                 </div>
             </div>
