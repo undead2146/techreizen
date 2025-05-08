@@ -14,13 +14,13 @@
                         </div>
                     @endif
 
-                    <p class="mb-3">Vul uw studentnummer in, en wij sturen een wachtwoord herstellink naar het e-mailadres dat aan uw account is gekoppeld.</p>
+                    <p class="mb-3">Vul uw login nummer in, en wij sturen een wachtwoord herstellink naar het e-mailadres dat aan uw account is gekoppeld.</p>
 
                     <form method="POST" action="{{ route('password.email') }}">
                         @csrf
 
                         <div class="row mb-3">
-                            <label for="login" class="col-md-4 col-form-label text-md-end">{{ __('Studentnummer') }}</label>
+                            <label for="login" class="col-md-4 col-form-label text-md-end">{{ __('Login nummer') }}</label>
 
                             <div class="col-md-6">
                                 <input id="login" type="text" class="form-control @error('login') is-invalid @enderror" name="login" value="{{ old('login') }}" required autocomplete="login" autofocus>

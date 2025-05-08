@@ -76,20 +76,39 @@ class GuestRegistrationController extends Controller
     // Submit Basic Info Form
     public function submitBasicInfo(Request $request)
     {
-        // Use the validation service to validate the form
-        $validation = $this->formValidator->validate(request: $request, formType: 'basicInfo');
+        // Haal het studentnummer op
+        $studentNumber = $request->input('student_number');
 
-        if (!$validation['success']) {
-            return back()
-                ->withErrors($validation['validator'])
-                ->withInput();
+        // Bepaal of de velden verplicht zijn op basis van het studentnummer
+        $rules = [
+            'trip' => 'required|string',
+            'student_number' => 'required|string|regex:/^[rub]\d{7}$/i',
+        ];
+
+        if (Str::startsWith(strtolower($studentNumber), 'r')) {
+            // Voor studenten zijn opleiding en afstudeerrichting verplicht
+            $rules['education'] = 'required|exists:educations,id';
+            $rules['major'] = 'required|string';
+        } else {
+            // Voor leraren/begeleiders zijn deze velden optioneel
+            $rules['education'] = 'nullable|exists:educations,id';
+            $rules['major'] = 'nullable|string';
         }
 
-        // Get current session data and update it with validated data
-        $registration = $request->session()->get(self::SESSION_KEY, []);
-        $registration = array_merge($registration, $validation['validated'], ['step' => 2]);
+        // Valideer de invoer
+        $validation = $request->validate($rules);
 
-        // Save updated data back to session
+        // Voeg standaardwaarden toe voor 'education' en 'major' als het een "u" of "b" nummer is
+        if (Str::startsWith(strtolower($studentNumber), ['u', 'b'])) {
+            $validation['education'] = null;
+            $validation['major'] = null;
+        }
+
+        // Haal de huidige sessiegegevens op en werk deze bij
+        $registration = $request->session()->get(self::SESSION_KEY, []);
+        $registration = array_merge($registration, $validation, ['step' => 2]);
+
+        // Sla de bijgewerkte gegevens op in de sessie
         $request->session()->put(self::SESSION_KEY, $registration);
 
         return redirect()->route('guest.registration.personal-info');
@@ -222,9 +241,9 @@ class GuestRegistrationController extends Controller
                 // Generate a secure random password
                 $password = Str::random(10);
 
-                // Determine role based on student number prefix (U = guide, others = traveller)
+                // Determine role based on student number prefix (R, U, B = traveller, others = guide)
                 $studentNumber = $registration['student_number'];
-                $role = (Str::startsWith(strtoupper($studentNumber), 'U')) ? 'guide' : 'traveller';
+                $role = (Str::startsWith(strtoupper($studentNumber), [ 'U', 'B'])) ? 'guide' : 'traveller';
 
                 // Create user with the fields that exist in the users table
                 $userData = [
@@ -241,6 +260,7 @@ class GuestRegistrationController extends Controller
                 // We'll need to send the password email after traveller creation
                 $shouldSendEmail = true;
             }
+
 
             // Find city record using city name and postal code
             $cityName = $registration['city'] ?? null;
