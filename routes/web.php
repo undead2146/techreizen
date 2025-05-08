@@ -95,7 +95,7 @@ Route::middleware(['auth', 'user-access:guide'])->group(function () {
     Route::get('/guide/home', [HomeController::class, 'guideHome'])->name('guide.home');
     
     // Guide-specific group management routes
-    Route::get('/guide/groups', [GroupController::class, 'index'])->name('guide.groups.index');
+    Route::get('/guide/groups', [GroupController::class, 'guideIndex'])->name('guide.groups.index');
     Route::get('/guide/groups/create', [GroupController::class, 'create'])->name('groups.create');
     Route::post('/guide/groups', [GroupController::class, 'store'])->name('groups.store');
     Route::get('/guide/groups/{group}', [GroupController::class, 'show'])->name('guide.groups.show');
