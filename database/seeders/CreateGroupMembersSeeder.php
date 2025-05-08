@@ -6,12 +6,12 @@ use Illuminate\Database\Seeder;
 use App\Models\Group;
 use App\Models\Traveller;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 
 class CreateGroupMembersSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     * Assigns travellers directly to groups using the group_id field.
      */
     public function run(): void
     {
@@ -23,45 +23,54 @@ class CreateGroupMembersSeeder extends Seeder
             return;
         }
         
-        // Get all travellers
-        $allTravellers = Traveller::whereHas('user')->get();
+        // Reset all travellers' group_id to null first to ensure clean state
+        Traveller::query()->update(['group_id' => null]);
         
-        if ($allTravellers->isEmpty()) {
-            $this->command->info('No travellers found, skipping member assignments');
-            return;
-        }
-
         $assignedCount = 0;
         
         foreach ($groups as $group) {
-            // Get traveller users for this trip who can join the group
-            $travellers = $allTravellers->where('trip_id', $group->trip_id);
+            // Get travellers for this trip who are not yet assigned to any group
+            $availableTravellers = Traveller::whereHas('user')
+                                           ->where('trip_id', $group->trip_id)
+                                           ->whereNull('group_id')
+                                           ->get();
             
-            if ($travellers->isEmpty()) {
+            if ($availableTravellers->isEmpty()) {
                 continue;
             }
             
-            // Add 3-6 random travelers to each group, respecting the max_members limit
-            $memberCount = min(count($travellers), rand(3, min(6, $group->max_members)));
-            $randomTravellers = $travellers->random($memberCount);
+            // Determine how many travellers to add (respect max_members)
+            $memberCount = min($availableTravellers->count(), rand(3, min(8, $group->max_members)));
             
-            foreach ($randomTravellers as $traveller) {
-                // Insert directly into group_members table
-                DB::table('group_members')->insertOrIgnore([
-                    'group_id' => $group->id,
-                    'traveller_id' => $traveller->id, 
-                    'joined_at' => now(),
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-                
-                // Also update the traveller's group_id for direct relationship
-                $traveller->update(['group_id' => $group->id]);
+            // Get random selection of travellers
+            $selectedTravellers = $availableTravellers->random($memberCount);
+            
+            // Add travellers to group
+            foreach ($selectedTravellers as $traveller) {
+                // Set group_id directly on traveller
+                $traveller->group_id = $group->id;
+                $traveller->save();
                 
                 $assignedCount++;
             }
+            
+            // Ensure one guide is assigned to each group
+            $guideUser = User::where('role', 'guide')->first();
+            if ($guideUser) {
+                // Find guide's traveller profile or create one if not exists
+                $guideTraveller = Traveller::where('user_id', $guideUser->id)
+                    ->where('trip_id', $group->trip_id)
+                    ->whereNull('group_id')
+                    ->first();
+                
+                if ($guideTraveller) {
+                    $guideTraveller->group_id = $group->id;
+                    $guideTraveller->save();
+                    $assignedCount++;
+                }
+            }
         }
         
-        $this->command->info("Assigned $assignedCount travellers to groups successfully");
+        $this->command->info("Assigned {$assignedCount} travellers to groups successfully");
     }
 }

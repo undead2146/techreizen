@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('travellers', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id'); // Changed to unsignedBigInteger
+        $table->unsignedBigInteger('user_id'); // Changed to unsignedBigInteger
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->unsignedBigInteger('trip_id'); // New field for trip_id
             $table->foreign('trip_id')->references('id')->on('trips')->onDelete('cascade'); // Foreign key constraint

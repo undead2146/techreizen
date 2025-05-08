@@ -14,7 +14,12 @@ class Group extends Model
         'description',
         'trip_id',
         'created_by',
-        'max_members'
+        'max_members',
+        'locked'
+    ];
+
+    protected $casts = [
+        'locked' => 'boolean',
     ];
 
     /**
@@ -42,28 +47,43 @@ class Group extends Model
     }
 
     /**
-     * Get the travellers (members) of this group through the group_members pivot
+     * Get all travelers in this group through the direct relationship
      */
     public function members()
     {
-        return $this->belongsToMany(Traveller::class, 'group_members', 'group_id', 'traveller_id')
-                    ->withTimestamps()
-                    ->withPivot('joined_at');
+        return $this->hasMany(Traveller::class, 'group_id');
     }
-    
+
     /**
      * Check if group is full
      */
     public function isFull()
     {
-        return $this->travellers()->count() >= $this->max_members;
+        return $this->members()->count() >= $this->max_members;
     }
-    
+
     /**
      * Get the current member count
      */
     public function getMemberCount()
     {
-        return $this->travellers()->count();
+        return $this->members()->count();
+    }
+
+    /**
+     * Check if the group is locked
+     */
+    public function isLocked(): bool
+    {
+        return (bool)$this->locked;
+    }
+    
+    /**
+     * Toggle the locked status of the group
+     */
+    public function toggleLock(): bool
+    {
+        $this->locked = !$this->locked;
+        return $this->save();
     }
 }

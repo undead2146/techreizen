@@ -20,6 +20,7 @@ return new class extends Migration
                 $table->unsignedBigInteger('trip_id'); // Changed from foreignId to avoid immediate constraints
                 $table->unsignedBigInteger('created_by'); // Changed from foreignId
                 $table->integer('max_members')->default(10);
+                $table->boolean('locked')->default(false);
                 $table->timestamps();
                 
                 // Add foreign key constraints after table creation

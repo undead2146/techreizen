@@ -311,8 +311,7 @@ class GuestRegistrationController extends Controller
                 'trip_id' => Trip::where('name', $registration['trip'])->value('id'),
                 'zip_id' => $city->id,
                 'major_id' => $majorId,
-                // group_id is not set in the form, so we can leave it empty
-                'group_id' => null,
+                'group_id' => null, // Explicitly set to null to prevent orphaned references
                 'first_name' => $registration['first_name'],
                 'last_name' => $registration['last_name'],
                 'email' => $registration['email'],

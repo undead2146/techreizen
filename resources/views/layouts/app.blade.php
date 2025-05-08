@@ -8,7 +8,7 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    <title>{{ config('app.name', 'Techreizen') }}</title>
 
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">
@@ -142,12 +142,12 @@
             @if (Auth::check() && Auth::user()->role === 'traveller')
                 <a class="navbar-brand" href="{{ url('/traveller/home') }}">Home</a>
             @elseif (Auth::check() && Auth::user()->role === 'guest')
-                <a class="navbar-brand" href="{{ url('/') }}">Home</a>
+                <a class="navbar-brand" href="{{ url('/guest/home') }}">Home</a>
             @else
-                <a class="navbar-brand" href="{{ url('/') }}">{{ config('app.name', 'Laravel') }}</a>
+                <a class="navbar-brand" href="{{ url('/') }}">{{ config('app.name', 'Home') }}</a>
             @endif
             
-            <!-- Always visible navigation - removed collapse classes -->
+            <!-- Always visible navigation -->
             <div class="navbar-collapse" id="navbarSupportedContent">
                 <!-- Left Side Of Navbar -->
                 <ul class="navbar-nav me-auto">
@@ -206,13 +206,23 @@
                                 </div>
                             </li>
                         @endif
-
+                        
+                        @if (Auth::user()->role === 'guest' && Route::has('register'))
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('register') }}">
+                                <div class="nav-btn nav-btn-green">
+                                    <i class="fas fa-user-plus mr-2"></i>{{ __('Register') }}
+                                </div>
+                            </a>
+                        </li>
+                    @endif
                         <li class="nav-item dropdown">
                             <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="nav-btn nav-btn-gray nav-btn-dropdown">
                                     <i class="fas fa-id-card mr-2 text-gray-600"></i>{{ Auth::user()->name ?? Auth::user()->login }}
                                 </span>
                             </a>
+
 
 
                             
@@ -233,15 +243,6 @@
 
                         
 
-                        @if (Auth::user()->role === 'guest' && Route::has('register'))
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('register') }}">
-                                    <div class="nav-btn nav-btn-green">
-                                        <i class="fas fa-user-plus mr-2"></i>{{ __('Register') }}
-                                    </div>
-                                </a>
-                            </li>
-                        @endif
 
                         
                     @endguest

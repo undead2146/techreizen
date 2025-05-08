@@ -1,55 +1,66 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <div class="max-w-2xl mx-auto">
-        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-            <div class="bg-indigo-600 p-6">
-                <h1 class="text-2xl font-bold text-white">Groep Bewerken</h1>
-                <p class="text-indigo-100 mt-2">{{ $group->name }}</p>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="mb-4">
+                <a href="{{ route('groups.show', $group) }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Terug naar groep
+                </a>
             </div>
             
-            <div class="p-6">
-                @if ($errors->any())
-                    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
-                        <p class="font-bold">Fout!</p>
-                        <ul>
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-                
-                <form method="POST" action="{{ route('groups.update', $group) }}">
-                    @csrf
-                    @method('PUT')
-                    
-                    <div class="mb-6">
-                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Groep naam</label>
-                        <input type="text" name="name" id="name" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" value="{{ old('name', $group->name) }}" required>
-                    </div>
-                    
-                    <div class="mb-6">
-                        <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Beschrijving</label>
-                        <textarea name="description" id="description" rows="4" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">{{ old('description', $group->description) }}</textarea>
-                    </div>
-                    
-                    <div class="mb-6">
-                        <label for="max_members" class="block text-sm font-medium text-gray-700 mb-1">Maximum aantal leden</label>
-                        <input type="number" name="max_members" id="max_members" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" min="{{ $group->getMemberCount() }}" value="{{ old('max_members', $group->max_members) }}" required>
-                        <p class="text-xs text-gray-500 mt-1">Kan alleen verhoogd worden als er al leden in deze groep zitten.</p>
-                    </div>
-                    
-                    <div class="flex items-center justify-end">
-                        <a href="{{ route('guide.groups.show', $group) }}" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">
-                            Annuleren
-                        </a>
-                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                            Opslaan
-                        </button>
-                    </div>
-                </form>
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-edit me-2"></i> Groep Bewerken</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('groups.update', $group) }}" method="POST">
+                        @csrf
+                        @method('PUT')
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Naam</label>
+                            <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name', $group->name) }}" required>
+                            @error('name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Beschrijving</label>
+                            <textarea class="form-control @error('description') is-invalid @enderror" id="description" name="description" rows="3">{{ old('description', $group->description) }}</textarea>
+                            @error('description')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="max_members" class="form-label">Maximaal aantal leden</label>
+                            <input type="number" class="form-control @error('max_members') is-invalid @enderror" id="max_members" name="max_members" value="{{ old('max_members', $group->max_members) }}" min="{{ $group->getMemberCount() }}" max="50" required>
+                            <div class="form-text">Het huidige aantal leden is {{ $group->getMemberCount() }}.</div>
+                            @error('max_members')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="locked" name="locked" value="1" {{ $group->isLocked() ? 'checked' : '' }}>
+                                <label class="form-check-label" for="locked">
+                                    Groep vergrendelen
+                                </label>
+                                <div class="form-text">Vergrendelde groepen kunnen geen nieuwe leden accepteren.</div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Opslaan
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
