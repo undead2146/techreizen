@@ -177,7 +177,21 @@ class GuestRegistrationController extends Controller
         if (!$validation['success']) {
             return back()
                 ->withErrors($validation['validator'])
-                ->withInput();
+                ->withInput(); // Preserve old input values
+        }
+
+        // Check for duplicate emails in the database
+        if (Traveller::where('email', $validation['validated']['email'])->exists()) {
+            return back()
+                ->withErrors(['email' => 'Dit e-mailadres is al in gebruik.'])
+                ->withInput(); // Preserve old input values
+        }
+
+        if (!empty($validation['validated']['secondary_email']) && 
+            Traveller::where('email', $validation['validated']['secondary_email'])->exists()) {
+            return back()
+                ->withErrors(['secondary_email' => 'Dit tweede e-mailadres is al in gebruik.'])
+                ->withInput(); // Preserve old input values
         }
 
         // Get current session data and update it with validated data
