@@ -73,7 +73,7 @@ class GroupController extends Controller
             $group->memberCount = $group->getMemberCount();
         }
         
-        return view('groups.guide-index', [
+        return view('guide.groups.index', [
             'groups' => $groups,
             'isGuide' => true
         ]);

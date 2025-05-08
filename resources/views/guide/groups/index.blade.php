@@ -1,149 +1,122 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
-    <!-- Guide Header Section -->
-    <div class="bg-gradient-to-r from-indigo-600 to-purple-700 rounded-t-lg shadow-lg p-6">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
-            <div class="mb-4 md:mb-0">
-                <h1 class="text-3xl font-bold text-white">Groepen Beheren</h1>
-                <p class="text-indigo-100 mt-2 text-lg">Beheer alle groepen voor deze reis</p>
-            </div>
-            <div>
-                <a href="{{ route('groups.create') }}" class="inline-flex items-center px-5 py-2.5 bg-white border border-transparent rounded-lg font-semibold text-sm text-indigo-700 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow transition-colors">
-                    <i class="fas fa-plus mr-2"></i> Nieuwe Groep
-                </a>
-            </div>
-        </div>
-    </div>
-    
-    <div class="bg-white rounded-b-lg shadow-lg p-6">
-        <!-- Alert Messages -->
-        @if (session('success'))
-            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded shadow" role="alert">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <i class="fas fa-check-circle mt-1"></i>
-                    </div>
-                    <div class="ml-3">
-                        <p>{{ session('success') }}</p>
-                    </div>
-                </div>
-            </div>
-        @endif
-        
-        @if (session('error'))
-            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded shadow" role="alert">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <i class="fas fa-exclamation-circle mt-1"></i>
-                    </div>
-                    <div class="ml-3">
-                        <p>{{ session('error') }}</p>
-                    </div>
-                </div>
-            </div>
-        @endif
-        
-        <!-- Groups Dashboard -->
-        <div class="mb-6">
-            <div class="flex flex-wrap items-center justify-between mb-6">
-                <h2 class="text-xl font-bold text-gray-800">Groepen Overzicht</h2>
-                <div class="mt-2 md:mt-0">
-                    <span class="text-sm text-gray-500">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        Beheer en organiseer alle groepen voor deze reis
-                    </span>
-                </div>
-            </div>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-12">
             
-            @if ($managedGroups->isEmpty())
-                <div class="text-center py-10 px-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 text-gray-400 mb-4">
-                        <i class="fas fa-users fa-lg"></i>
-                    </div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">Geen groepen beschikbaar</h3>
-                    <p class="text-gray-500 max-w-md mx-auto mb-6">
-                        Er zijn nog geen groepen aangemaakt voor deze reis.
-                    </p>
-                    <a href="{{ route('groups.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors">
-                        <i class="fas fa-plus mr-2"></i> Nieuwe Groep Aanmaken
-                    </a>
-                </div>
-            @else
-                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Naam</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Beschrijving</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Leden</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Gemaakt door</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Aangemaakt</th>
-                                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @foreach ($managedGroups as $group)
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900">{{ $group->name }}</div>
-                                            <div class="text-sm text-gray-500 md:hidden">
-                                                {{ Str::limit($group->description, 30) }}
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 hidden md:table-cell">
-                                            <div class="text-sm text-gray-500">{{ Str::limit($group->description, 50) }}</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="flex items-center">
-                                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $group->isFull() ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' }}">
-                                                    {{ $group->getMemberCount() }}/{{ $group->max_members }}
-                                                </span>
-                                                
-                                                @if($group->getMemberCount() >= $group->max_members)
-                                                    <span class="ml-2 text-xs text-red-600">Vol</span>
-                                                @endif
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-                                            <div class="text-sm text-gray-500">{{ $group->creator->name ?? 'Onbekend' }}</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-                                            <div class="text-sm text-gray-500">
-                                                <time datetime="{{ $group->created_at->format('Y-m-d') }}" title="{{ $group->created_at->format('d-m-Y H:i') }}">
-                                                    {{ $group->created_at->format('d-m-Y') }}
-                                                </time>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div class="flex items-center justify-end space-x-3">
-                                                <a href="{{ route('guide.groups.show', $group) }}" class="text-indigo-600 hover:text-indigo-900" title="Bekijken">
-                                                    <i class="fas fa-eye"></i>
-                                                    <span class="sr-only">Bekijken</span>
-                                                </a>
-                                                <a href="{{ route('groups.edit', $group) }}" class="text-blue-600 hover:text-blue-900" title="Bewerken">
-                                                    <i class="fas fa-edit"></i>
-                                                    <span class="sr-only">Bewerken</span>
-                                                </a>
-                                                <form action="{{ route('groups.destroy', $group) }}" method="POST" class="inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="text-red-600 hover:text-red-900" title="Verwijderen" onclick="return confirm('Weet je zeker dat je deze groep wilt verwijderen?')">
-                                                        <i class="fas fa-trash"></i>
-                                                        <span class="sr-only">Verwijderen</span>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+            @if(session('success'))
+                <div class="alert alert-success" role="alert">
+                    {{ session('success') }}
                 </div>
             @endif
+            
+            @if(session('error'))
+                <div class="alert alert-danger" role="alert">
+                    {{ session('error') }}
+                </div>
+            @endif
+            
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i> Groepen Beheren</h5>
+                    <a href="{{ route('groups.create') }}" class="btn btn-sm btn-light">
+                        <i class="fas fa-plus me-1"></i> Nieuwe Groep
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if(count($groups) > 0)
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Naam</th>
+                                        <th>Beschrijving</th>
+                                        <th>Leden</th>
+                                        <th>Status</th>
+                                        <th>Begeleiders</th>
+                                        <th>Acties</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($groups as $group)
+                                        @php
+                                            $guideMembers = $group->members->filter(function($member) {
+                                                return $member->user && $member->user->role === 'guide';
+                                            });
+                                        @endphp
+                                        <tr>
+                                            <td>{{ $group->name }}</td>
+                                            <td>{{ Str::limit($group->description, 50) }}</td>
+                                            <td>{{ $group->memberCount }}/{{ $group->max_members }}</td>
+                                            <td>
+                                                @if($group->isLocked())
+                                                    <span class="badge bg-danger">
+                                                        <i class="fas fa-lock me-1"></i> Vergrendeld
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-lock-open me-1"></i> Open
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if($guideMembers->count() > 0)
+                                                    @foreach($guideMembers as $guide)
+                                                        <span class="badge bg-info">
+                                                            <i class="fas fa-user-tie me-1"></i>
+                                                            {{ $guide->first_name }} {{ $guide->last_name }}
+                                                        </span>
+                                                        @if(!$loop->last) &nbsp; @endif
+                                                    @endforeach
+                                                @else
+                                                    <span class="badge bg-secondary">Geen begeleiders</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{{ route('groups.show', $group) }}" class="btn btn-outline-primary">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{{ route('groups.edit', $group) }}" class="btn btn-outline-secondary">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <form action="{{ route('groups.toggle-lock', $group) }}" method="POST" class="d-inline">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-outline-warning rounded-0">
+                                                            @if($group->isLocked())
+                                                                <i class="fas fa-lock-open"></i>
+                                                            @else
+                                                                <i class="fas fa-lock"></i>
+                                                            @endif
+                                                        </button>
+                                                    </form>
+                                                    <button type="button" class="btn btn-outline-danger rounded-end" 
+                                                        onclick="if(confirm('Weet je zeker dat je deze groep wilt verwijderen?')) document.getElementById('delete-form-{{ $group->id }}').submit();">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                    <form id="delete-form-{{ $group->id }}" action="{{ route('groups.destroy', $group) }}" method="POST" class="d-none">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="text-center p-4">
+                            <i class="fas fa-users-slash fa-3x text-muted mb-3"></i>
+                            <p class="mb-0">Er zijn nog geen groepen aangemaakt voor deze reis.</p>
+                            <a href="{{ route('groups.create') }}" class="btn btn-primary mt-3">
+                                <i class="fas fa-plus me-1"></i> Nieuwe Groep Aanmaken
+                            </a>
+                        </div>
+                    @endif
+                </div>
+            </div>
         </div>
     </div>
 </div>
