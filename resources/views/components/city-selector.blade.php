@@ -17,7 +17,7 @@
                     placeholder="Zoek gemeente of postcode..."
                     x-model="searchQuery"
                     x-on:input="searchCities"
-                    x-on:focus="showDropdown = true"
+                    x-on:focus="showDropdown = true; if(searchQuery && searchQuery.length >= 2) searchCities()"
                     x-on:keydown.arrow-down.prevent="navigateDown()"
                     x-on:keydown.arrow-up.prevent="navigateUp()"
                     x-on:keydown.enter.prevent="selectHighlighted()"
@@ -655,7 +655,8 @@ document.addEventListener('alpine:init', () => {
                     const data = await response.json();
                     this.searchResults = data;
 
-                    // Check for exact match (case-insensitive)
+
+                                        // Check for exact match (case-insensitive)
                     const exactMatch = data.find(city =>
                         city.plaatsnaam.toLowerCase() === this.searchQuery.toLowerCase() ||
                         city.postcode === this.searchQuery
