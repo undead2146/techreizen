@@ -1,0 +1,18 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="dev" type="js.build_tools.npm" nameIsGenerated="true">
+    <package-json value="$PROJECT_DIR$/package.json" />
+    <command value="run" />
+    <scripts>
+      <script value="dev" />
+    </scripts>
+    <node-interpreter value="project" />
+    <envs />
+    <method v="2" />
+  </configuration>
+  <configuration default="false" name="dev" type="ComposerRunConfigurationType" factoryName="Composer Script">
+    <option name="commandLineParameters" value="" />
+    <option name="pathToComposerJson" value="$PROJECT_DIR$/composer.json" />
+    <option name="script" value="dev" />
+    <method v="2" />
+  </configuration>
+</component>
