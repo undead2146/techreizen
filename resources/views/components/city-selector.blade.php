@@ -1,6 +1,6 @@
 @props(['selectedCity' => null, 'selectedPostalCode' => null, 'hasError' => false])
 
-<div 
+<div
     x-data="citySelectorComponent()"
     x-init="initialize('{{ $selectedCity }}', '{{ $selectedPostalCode }}')"
     class="premium-city-selector"
@@ -11,8 +11,8 @@
                 <span class="search-icon">
                     <i class="fas fa-search"></i>
                 </span>
-                <input 
-                    type="text" 
+                <input
+                    type="text"
                     class="search-input {{ $hasError ? 'is-invalid' : '' }}"
                     placeholder="Zoek gemeente of postcode..."
                     x-model="searchQuery"
@@ -25,10 +25,10 @@
                     autocomplete="off"
                 >
                 <span class="search-actions">
-                    <button 
-                        x-show="searchQuery && searchQuery.length > 0" 
-                        @click="clearSearch()" 
-                        type="button" 
+                    <button
+                        x-show="searchQuery && searchQuery.length > 0"
+                        @click="clearSearch()"
+                        type="button"
                         class="clear-btn"
                         title="Wissen"
                     >
@@ -37,20 +37,23 @@
                 </span>
             </div>
         </div>
-        
+
         <input type="hidden" name="city" x-model="selectedCity" {{ $attributes }}>
         <input type="hidden" name="postcode" x-model="selectedPostalCode">
-        
+
         <div class="city-selection" x-show="selectedCity || selectedPostalCode" x-transition>
             <div class="selection-badge">
                 <span class="postal-code" x-show="selectedPostalCode" x-text="selectedPostalCode"></span>
-                <span class="city-name" x-show="selectedCity" x-text="selectedCity"></span>                
+                <span class="city-name" x-show="selectedCity" x-text="selectedCity"></span>
+                <button type="button" class="remove-selection" @click="clearSelection()">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
         </div>
-        
+
         <!-- Dropdown -->
-        <div 
-            class="search-results-dropdown" 
+        <div
+            class="search-results-dropdown"
             x-show="showDropdown && searchQuery && searchQuery.length >= 2"
             x-cloak
         >
@@ -75,8 +78,8 @@
             </template>
             <ul class="results-list" x-show="searchResults.length > 0">
                 <template x-for="(city, index) in searchResults" :key="index">
-                    <li 
-                        class="result-item" 
+                    <li
+                        class="result-item"
                         :class="{ 'highlighted': highlightedIndex === index }"
                         @mouseover="highlightedIndex = index"
                         @click="selectCity(city)"
@@ -93,15 +96,15 @@
             </ul>
         </div>
     </div>
-    
+
     <!-- Add City Modal -->
-    <div 
-        class="city-modal-overlay" 
-        x-show="showAddCityModal" 
+    <div
+        class="city-modal-overlay"
+        x-show="showAddCityModal"
         x-transition
         x-cloak
     >
-        <div 
+        <div
             class="city-modal-container"
             @click.away="showAddCityModal = false"
         >
@@ -117,20 +120,20 @@
             <div class="city-modal-body">
                 <div class="form-group">
                     <label for="new-city-name">Naam gemeente <span class="required">*</span></label>
-                    <input 
-                        type="text" 
+                    <input
+                        type="text"
                         id="new-city-name"
                         name="new_city_name"
-                        class="form-control" 
+                        class="form-control"
                         x-model="newCityName"
                         placeholder="Voer gemeentenaam in"
                     >
                 </div>
                 <div class="form-group">
                     <label for="new-postal-code">Postcode <span class="required">*</span></label>
-                    <input 
-                        type="text" 
-                        id="new-postal-code" 
+                    <input
+                        type="text"
+                        id="new-postal-code"
                         name="new_postcode"
                         class="form-control"
                         x-model="newPostalCode"
@@ -140,9 +143,9 @@
                 </div>
                 <div class="form-group">
                     <label for="new-province">Provincie <span class="optional">(optioneel)</span></label>
-                    <input 
-                        type="text" 
-                        id="new-province" 
+                    <input
+                        type="text"
+                        id="new-province"
                         name="new_province"
                         class="form-control"
                         x-model="newProvince"
@@ -155,9 +158,9 @@
                 <button type="button" class="btn-cancel" @click="showAddCityModal = false">
                     Annuleren
                 </button>
-                <button 
-                    type="button" 
-                    class="btn-save" 
+                <button
+                    type="button"
+                    class="btn-save"
                     @click="addNewCity()"
                     :disabled="!newCityName || newCityName.trim().length < 2 || !newPostalCode || newPostalCode.trim().length < 1"
                 >
@@ -168,6 +171,8 @@
         </div>
     </div>
 </div>
+
+<script src="{{ asset('js/city-selector.js') }}"></script>
 
 <style>
 /* Premium City Selector Styling */
@@ -619,6 +624,13 @@ document.addEventListener('alpine:init', () => {
             this.selectedPostalCode = selectedPostalCode && selectedPostalCode !== 'null' ? selectedPostalCode : '';
             this.searchQuery = this.selectedCity || '';
 
+            // If we have initial values, trigger a search to validate/select the city
+            if (this.searchQuery) {
+                this.$nextTick(() => {
+                    this.performSearch();
+                });
+            }
+
             // Close dropdown when clicking outside
             document.addEventListener('click', (e) => {
                 if (!this.$el.contains(e.target)) this.showDropdown = false;
@@ -627,14 +639,14 @@ document.addEventListener('alpine:init', () => {
 
         searchCities() {
             if (this.debounceTimer) clearTimeout(this.debounceTimer);
-            
+
             // Clear results if query is too short
             if (!this.searchQuery || this.searchQuery.length < 2) {
                 this.searchResults = [];
                 this.showDropdown = false;
                 return;
             }
-            
+
             this.isLoading = true;
             this.debounceTimer = setTimeout(() => this.performSearch(), 300);
         },
@@ -642,15 +654,25 @@ document.addEventListener('alpine:init', () => {
         async performSearch() {
             try {
                 const response = await fetch(`/api/cities/search?query=${encodeURIComponent(this.searchQuery)}`);
-                
                 if (response.ok) {
                     const data = await response.json();
                     this.searchResults = data;
-                    this.showDropdown = true;
-                    this.highlightedIndex = this.searchResults.length > 0 ? 0 : -1;
+
+                    // Check for exact match (case-insensitive)
+                    const exactMatch = data.find(city =>
+                        city.plaatsnaam.toLowerCase() === this.searchQuery.toLowerCase() ||
+                        city.postcode === this.searchQuery
+                    );
+
+                    if (exactMatch) {
+                        // Automatically select the exact match
+                        this.selectCity(exactMatch);
+                        this.showDropdown = false;
+                    } else {
+                        this.showDropdown = true;
+                        this.highlightedIndex = 0;
+                    }
                 } else {
-                    const errorData = await response.json();
-                    console.error('Search error:', errorData);
                     this.searchResults = [];
                     this.showDropdown = false;
                 }
@@ -664,24 +686,64 @@ document.addEventListener('alpine:init', () => {
         },
 
         selectCity(city) {
-            // Use the correct property names from the API response
+            if (!city) return;
+
             this.selectedCity = city.plaatsnaam;
             this.selectedPostalCode = city.postcode || '';
-            this.searchQuery = city.plaatsnaam; 
+            this.searchQuery = city.plaatsnaam;
             this.showDropdown = false;
-            
-            // Make sure hidden inputs are properly updated
-            const cityInput = this.$el.querySelector('input[name="city"]');
-            const postalInput = this.$el.querySelector('input[name="postcode"]');
-            
-            if (cityInput) cityInput.value = this.selectedCity;
-            if (postalInput) postalInput.value = this.selectedPostalCode;
+            this.searchResults = [];  // Clear results after selection
+
+            // Update hidden inputs and trigger events
+            this.$nextTick(() => {
+                const cityInput = this.$el.querySelector('input[name="city"]');
+                const postalInput = this.$el.querySelector('input[name="postcode"]');
+
+                if (cityInput) {
+                    cityInput.value = this.selectedCity;
+                    cityInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    cityInput.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+
+                if (postalInput) {
+                    postalInput.value = this.selectedPostalCode;
+                    postalInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    postalInput.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+
+                // Dispatch selection event
+                this.$dispatch('city-selected', {
+                    city: city,
+                    selected: true,
+                    timestamp: new Date().getTime()
+                });
+            });
         },
 
         clearSelection() {
             this.selectedCity = '';
             this.selectedPostalCode = '';
             this.searchQuery = '';
+
+            // Force update hidden inputs
+            this.$nextTick(() => {
+                const cityInput = this.$el.querySelector('input[name="city"]');
+                const postalInput = this.$el.querySelector('input[name="postcode"]');
+
+                if (cityInput) {
+                    cityInput.value = '';
+                    cityInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    cityInput.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+
+                if (postalInput) {
+                    postalInput.value = '';
+                    postalInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    postalInput.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            });
+
+            this.$dispatch('city-cleared');
         },
 
         clearSearch() {
@@ -708,17 +770,17 @@ document.addEventListener('alpine:init', () => {
 
         async addNewCity() {
             this.errorMessage = '';
-            
+
             if (!this.newCityName || this.newCityName.trim().length < 2) {
                 this.errorMessage = 'Geef een geldige gemeentenaam op (minimaal 2 tekens)';
                 return;
             }
-            
+
             if (!this.newPostalCode || this.newPostalCode.trim().length < 1) {
                 this.errorMessage = 'Geef een geldige postcode op';
                 return;
             }
-            
+
             try {
                 const response = await fetch('/api/cities', {
                     method: 'POST',
@@ -726,37 +788,37 @@ document.addEventListener('alpine:init', () => {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                     },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         plaatsnaam: this.newCityName.trim(),
                         postcode: this.newPostalCode.trim(),
                         provincie: this.newProvince.trim() || null
                     })
                 });
-                
+
                 if (response.ok) {
                     const newCity = await response.json();
-                    
+
                     this.selectCity(newCity);
                     this.showAddCityModal = false;
                     this.newCityName = '';
                     this.newPostalCode = '';
                     this.newProvince = '';
-                    
+
                     // Dispatch appropriate event based on status code
                     const isNewlyCreated = response.status === 201;
                     if (isNewlyCreated) {
-                        window.dispatchEvent(new CustomEvent('city-added', { 
+                        window.dispatchEvent(new CustomEvent('city-added', {
                             detail: { city: newCity }
                         }));
                     } else {
-                        window.dispatchEvent(new CustomEvent('city-found', { 
+                        window.dispatchEvent(new CustomEvent('city-found', {
                             detail: { city: newCity }
                         }));
                     }
                 } else {
                     const errorData = await response.json();
                     console.error('Error adding city:', errorData);
-                    
+
                     if (errorData.errors && errorData.errors.plaatsnaam) {
                         this.errorMessage = errorData.errors.plaatsnaam[0];
                     } else if (errorData.errors && errorData.errors.postcode) {
