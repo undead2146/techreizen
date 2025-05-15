@@ -45,9 +45,6 @@
             <div class="selection-badge">
                 <span class="postal-code" x-show="selectedPostalCode" x-text="selectedPostalCode"></span>
                 <span class="city-name" x-show="selectedCity" x-text="selectedCity"></span>
-                <button type="button" class="remove-selection" @click="clearSelection()">
-                    <i class="fas fa-times"></i>
-                </button>
             </div>
         </div>
 

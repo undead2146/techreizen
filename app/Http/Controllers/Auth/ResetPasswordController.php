@@ -133,4 +133,24 @@ class ResetPasswordController extends Controller
             ->withInput($request->only('email'))
             ->withErrors(['email' => trans($response)]);
     }
+
+    use ResetsPasswords;
+
+    /**
+     * Where to redirect users after resetting their password.
+     *
+     * @return string
+     */
+    protected function redirectTo()
+    {
+        if (auth()->user()->role == 'guide') {
+            return route('guide.home');
+        } elseif (auth()->user()->role == 'admin') {
+            return route('admin.home');
+        } elseif (auth()->user()->role == 'traveller') {
+            return route('traveller.home');
+        } else {
+            return route('home'); // Default fallback
+        }
+    }
 }

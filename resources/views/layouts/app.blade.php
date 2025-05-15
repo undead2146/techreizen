@@ -143,6 +143,8 @@
                 <a class="navbar-brand" href="{{ url('/traveller/home') }}">Home</a>
             @elseif (Auth::check() && Auth::user()->role === 'guest')
                 <a class="navbar-brand" href="{{ url('/guest/home') }}">Home</a>
+            @elseif (Auth::check() && Auth::user()->role === 'guide')
+                <a class="navbar-brand" href="{{ url('/guide/home') }}">Home</a>
             @else
                 <a class="navbar-brand" href="{{ url('/') }}">{{ config('app.name', 'Home') }}</a>
             @endif
