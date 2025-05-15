@@ -169,6 +169,11 @@
 
         medicalInfoYes.addEventListener('change', toggleMedicalDetails);
         medicalInfoNo.addEventListener('change', toggleMedicalDetails);
+
+        // Ensure the form state is updated immediately after validation errors
+        document.querySelector('form').addEventListener('submit', function () {
+            toggleMedicalDetails();
+        });
     });
 </script>
 @endsection

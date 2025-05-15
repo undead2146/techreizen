@@ -47,18 +47,37 @@
     </div>
 
     <div class="content">
-        <h3>Uw wachtwoord is gereset</h3>
+        <h3>Wachtwoord Herstel</h3>
         
         <p>Beste {{ $user->login }},</p>
         
-        <p>Uw wachtwoord voor TechReizen is gereset volgens uw verzoek. Hieronder vindt u uw nieuwe inloggegevens:</p>
-        
-        <p><strong>Gebruikersnaam:</strong> {{ $user->login }}</p>
-        <p><strong>Nieuw wachtwoord:</strong> <span class="password">{{ $password }}</span></p>
-        
-        <p>U kunt inloggen met deze gegevens via <a href="{{ config('app.url') . route('login', [], false) }}">onze website</a>.</p>
-        
-        <p>Wij raden u aan om dit wachtwoord zo snel mogelijk te wijzigen na het inloggen.</p>
+        @if(isset($resetUrl))
+            <p>U heeft een verzoek ingediend om uw wachtwoord te herstellen. Klik op de onderstaande link om een nieuw wachtwoord in te stellen:</p>
+            
+            <p style="text-align: center; margin: 30px 0;">
+                <a href="{{ $resetUrl }}" style="background-color: #0066cc; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                    Wachtwoord Herstellen
+                </a>
+            </p>
+            
+            <p>U kunt deze link ook kopiëren en in uw browser plakken:</p>
+            <p style="word-break: break-all; background-color: #f8f9fa; padding: 10px; border: 1px solid #ddd; border-radius: 3px;">
+                {{ $resetUrl }}
+            </p>
+            
+            <p>Deze link is 60 minuten geldig.</p>
+            
+            <p>Als u geen wachtwoord herstel heeft aangevraagd, kunt u deze e-mail negeren en blijft uw huidige wachtwoord geldig.</p>
+        @else
+            <p>Uw wachtwoord voor TechReizen is gereset volgens uw verzoek. Hieronder vindt u uw nieuwe inloggegevens:</p>
+            
+            <p><strong>Gebruikersnaam:</strong> {{ $user->login }}</p>
+            <p><strong>Nieuw wachtwoord:</strong> <span class="password">{{ $password }}</span></p>
+            
+            <p>U kunt inloggen met deze gegevens via <a href="{{ config('app.url') . route('login', [], false) }}">onze website</a>.</p>
+            
+            <p>Wij raden u aan om dit wachtwoord zo snel mogelijk te wijzigen na het inloggen.</p>
+        @endif
         
         <p>Als u dit verzoek niet heeft gedaan, neem dan direct contact op met onze klantenservice.</p>
         

@@ -13,12 +13,15 @@ return new class extends Migration
     {
         Schema::create('travellers', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id'); // Changed to unsignedBigInteger
+        $table->unsignedBigInteger('user_id'); // Changed to unsignedBigInteger
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->unsignedBigInteger('trip_id'); // New field for trip_id
             $table->foreign('trip_id')->references('id')->on('trips')->onDelete('cascade'); // Foreign key constraint
-            $table->integer('zip_id')->length(10);
-            $table->integer('major_id')->length(10);
+            $table->unsignedBigInteger('zip_id')->length(10);
+            $table->foreign('zip_id')->references('id')->on('cities')->onDelete('cascade');
+            $table->unsignedBigInteger('group_id')->length(10)->nullable();
+            $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade');
+            $table->integer('major_id')->length(10)->nullable();
             $table->string('first_name');
             $table->string('last_name');
             $table->string('email');
@@ -27,14 +30,14 @@ return new class extends Migration
             $table->string('gender');
             $table->string('phone');
             $table->string('emergency_phone_1');
-            $table->string('emergency_phone_2');
+            $table->string('emergency_phone_2')->nullable();
             $table->string('nationality');
             $table->date('birthdate');
             $table->string('birthplace');
             $table->string('iban');
             $table->string('bic');
-            $table->tinyInteger('medical_issue');
-            $table->string('medical_info');
+            $table->tinyInteger('medical_issue')->nullable();
+            $table->string('medical_info')->nullable();
             $table->string('remember_token', 100)->nullable();
             $table->timestamps();
         });

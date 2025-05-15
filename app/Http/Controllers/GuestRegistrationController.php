@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Education;
 use App\Models\Major;
-use App\Models\Cities;
+use App\Models\City;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Traveller;
@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 use Illuminate\Support\Str;
 use App\Mail\RegistrationConfirmationMail;
+use App\Models\Cities;
 use Illuminate\Support\Facades\Mail;
 
 class GuestRegistrationController extends Controller
@@ -75,36 +76,53 @@ class GuestRegistrationController extends Controller
     // Submit Basic Info Form
     public function submitBasicInfo(Request $request)
     {
-        // Use the validation service to validate the form
-        $validation = $this->formValidator->validate(request: $request, formType: 'basicInfo');
+        // Haal het studentnummer op
+        $studentNumber = $request->input('student_number');
 
-        if (!$validation['success']) {
-            return back()
-                ->withErrors($validation['validator'])
-                ->withInput();
+        // Bepaal of de velden verplicht zijn op basis van het studentnummer
+        $rules = [
+            'trip' => 'required|string',
+            'student_number' => 'required|string|regex:/^[rub]\d{7}$/i',
+        ];
+
+        if (Str::startsWith(strtolower($studentNumber), 'r')) {
+            // Voor studenten zijn opleiding en afstudeerrichting verplicht
+            $rules['education'] = 'required|exists:educations,id';
+            $rules['major'] = 'required|string';
+        } else {
+            // Voor leraren/begeleiders zijn deze velden optioneel
+            $rules['education'] = 'nullable|exists:educations,id';
+            $rules['major'] = 'nullable|string';
         }
 
-        // Get current session data and update it with validated data
-        $registration = $request->session()->get(self::SESSION_KEY, []);
-        $registration = array_merge($registration, $validation['validated'], ['step' => 2]);
+        // Valideer de invoer
+        $validation = $request->validate($rules);
 
-        // Save updated data back to session
+        // Voeg standaardwaarden toe voor 'education' en 'major' als het een "u" of "b" nummer is
+        if (Str::startsWith(strtolower($studentNumber), ['u', 'b'])) {
+            $validation['education'] = null;
+            $validation['major'] = null;
+        }
+
+        // Haal de huidige sessiegegevens op en werk deze bij
+        $registration = $request->session()->get(self::SESSION_KEY, []);
+        $registration = array_merge($registration, $validation, ['step' => 2]);
+
+        // Sla de bijgewerkte gegevens op in de sessie
         $request->session()->put(self::SESSION_KEY, $registration);
 
         return redirect()->route('guest.registration.personal-info');
     }
 
     // Show Personal Info Form
-    public function showPersonalInfoForm(Request $request)
+    public function showPersonalInfoForm()
     {
-        $registration = $request->session()->get(self::SESSION_KEY, ['step' => 1]);
-
-        if ($registration['step'] < 2) {
-            return redirect()->route('guest.registration.basic-info');
-        }
-
-        $cities = Cities::all();
-
+        // Get registration data from session using the correct session key
+        $registration = session()->get(self::SESSION_KEY, []);
+        
+        // Load all cities for the dropdown
+        $cities = Cities::orderBy('plaatsnaam')->get();
+        
         return view('guest.registration.personal-info', ['registration' => (object) $registration, 'cities' => $cities]);
     }
 
@@ -120,9 +138,17 @@ class GuestRegistrationController extends Controller
                 ->withInput();
         }
 
-        // Get current session data and update it with validated data
+        // Get current session data
         $registration = $request->session()->get(self::SESSION_KEY, []);
-        $registration = array_merge($registration, $validation['validated'], ['step' => 3]);
+        
+        // Explicitly ensure postcode is included
+        $validated = $validation['validated'];
+        if ($request->has('postcode')) {
+            $validated['postcode'] = $request->input('postcode');
+        }
+        
+        // Merge with existing data and set next step
+        $registration = array_merge($registration, $validated, ['step' => 3]);
 
         // Save updated data back to session
         $request->session()->put(self::SESSION_KEY, $registration);
@@ -151,7 +177,21 @@ class GuestRegistrationController extends Controller
         if (!$validation['success']) {
             return back()
                 ->withErrors($validation['validator'])
-                ->withInput();
+                ->withInput(); // Preserve old input values
+        }
+
+        // Check for duplicate emails in the database
+        if (Traveller::where('email', $validation['validated']['email'])->exists()) {
+            return back()
+                ->withErrors(['email' => 'Dit e-mailadres is al in gebruik.'])
+                ->withInput(); // Preserve old input values
+        }
+
+        if (!empty($validation['validated']['secondary_email']) && 
+            Traveller::where('email', $validation['validated']['secondary_email'])->exists()) {
+            return back()
+                ->withErrors(['secondary_email' => 'Dit tweede e-mailadres is al in gebruik.'])
+                ->withInput(); // Preserve old input values
         }
 
         // Get current session data and update it with validated data
@@ -196,14 +236,10 @@ class GuestRegistrationController extends Controller
             $existingUser = User::where('login', $registration['student_number'])->first();
 
             if ($existingUser) {
-                \Log::info("User with login {$registration['student_number']} already exists. Skipping user creation.");
-
                 // Check if the user already has a traveller record
                 $existingTraveller = Traveller::where('user_id', $existingUser->id)->first();
 
                 if ($existingTraveller) {
-                    \Log::info("Traveller record for {$registration['student_number']} already exists. Registration complete.");
-
                     // Clear the registration data from session
                     $request->session()->forget(self::SESSION_KEY);
 
@@ -219,21 +255,48 @@ class GuestRegistrationController extends Controller
                 // Generate a secure random password
                 $password = Str::random(10);
 
+                // Determine role based on student number prefix (R, U, B = traveller, others = guide)
+                $studentNumber = $registration['student_number'];
+                $role = (Str::startsWith(strtoupper($studentNumber), [ 'U', 'B'])) ? 'guide' : 'traveller';
+
                 // Create user with the fields that exist in the users table
                 $userData = [
-                    'login' => $registration['student_number'],
+                    'login' => $studentNumber,
                     'password' => Hash::make($password),
-                    'role' => 'traveller',
+                    'role' => $role // Set role based on the student number prefix
                 ];
 
                 // Reset AUTO_INCREMENT value for users table to avoid id gaps
                 DB::statement("ALTER TABLE users AUTO_INCREMENT = 1");
                 // Create the user record
                 $user = User::create($userData);
-                \Log::info("Created new user with login: {$registration['student_number']}");
 
                 // We'll need to send the password email after traveller creation
                 $shouldSendEmail = true;
+            }
+
+
+            // Find city record using city name and postal code
+            $cityName = $registration['city'] ?? null;
+            $postalCode = $registration['postcode'] ?? null;
+
+            if (!$cityName) {
+                throw new \Exception("Missing city name in registration data");
+            }
+
+            // Try to find the city record
+            $city = null;
+
+            // First, try exact match on both city name and postal code
+            if ($postalCode) {
+                $city = Cities::where('plaatsnaam', $cityName)
+                            ->where('postcode', $postalCode)
+                            ->first();
+            }
+
+            // If not found, try by name only
+            if (!$city) {
+                $city = Cities::where('plaatsnaam', $cityName)->first();
             }
 
             // Get the major ID based on name and education
@@ -241,12 +304,14 @@ class GuestRegistrationController extends Controller
                 ->where('education_id', $registration['education'])
                 ->first();
             $majorId = $major ? $major->id : 1; // Default to 1 if not found
+            
             // Create the traveller record matching the database schema
             $travellerData = [
                 'user_id' => $user->id,
-                'trip_id' => Trip::where('name', $registration['trip'])->value('id'), // set trip_id based on trip name
-                'zip_id' => 3000, // Default value
+                'trip_id' => Trip::where('name', $registration['trip'])->value('id'),
+                'zip_id' => $city->id,
                 'major_id' => $majorId,
+                'group_id' => null, // Explicitly set to null to prevent orphaned references
                 'first_name' => $registration['first_name'],
                 'last_name' => $registration['last_name'],
                 'email' => $registration['email'],
@@ -264,8 +329,7 @@ class GuestRegistrationController extends Controller
                 'medical_issue' => $registration['medical_info'] === 'yes' ? 1 : 0,
                 'medical_info' => $registration['medical_info'] === 'yes' ? $registration['medical_details'] : '',
                 'created_at' => now(),
-                'updated_at' => now(),
-                 // from basic-info form
+                'updated_at' => now(),  
             ];
 
             //this is for when u delete a user in the database, the id will be reset to 1
@@ -273,14 +337,18 @@ class GuestRegistrationController extends Controller
             DB::statement("ALTER TABLE travellers AUTO_INCREMENT = 1");
             // Use direct DB insertion to avoid model validation issues
             DB::table('travellers')->insert($travellerData);
-            \Log::info("Created traveller record for: {$registration['first_name']} {$registration['last_name']}");
 
             // Send the confirmation email with login credentials if this is a new user
             if (isset($shouldSendEmail)) {
+                $roleDescription = $user->role === 'guide' ? 'begeleider' : 'reiziger';
+                
                 Mail::to($registration['email'])->send(new RegistrationConfirmationMail(
-                    (object) array_merge($registration, ['password' => $password])
+                    (object) array_merge($registration, [
+                        'password' => $password,
+                        'role' => $user->role,
+                        'role_description' => $roleDescription
+                    ])
                 ));
-                \Log::info("Sent registration confirmation email to: {$registration['email']}");
             }
 
             // Clear the registration data from session
@@ -292,16 +360,19 @@ class GuestRegistrationController extends Controller
             $request->session()->regenerateToken();
 
             // Redirect to login page with success message and pre-filled data
+            $roleMessage = $user->role === 'guide' 
+                ? 'U bent geregistreerd als begeleider.' 
+                : 'U bent geregistreerd als reiziger.';
+                
             return redirect()->route('login')
                 ->with('registration_complete', true)
                 ->with('login', $registration['student_number'])
-                ->with('success', 'Uw registratie is succesvol verwerkt! Een e-mail met uw inloggegevens is verzonden naar ' . $registration['email'] . '. Controleer uw inbox om uw account te activeren.');
+                ->with('success', 'Uw registratie is succesvol verwerkt! ' . $roleMessage . ' Een e-mail met uw inloggegevens is verzonden naar ' . $registration['email'] . '. Controleer uw inbox om uw account te activeren.');
 
         } 
         catch (\Exception $e) {
             // Log the error and show a generic message
             \Log::error("Registration error: " . $e->getMessage());
-            \Log::error("Stack trace: " . $e->getTraceAsString());
 
             return redirect()->route('login')
                 ->with('error', 'Er is een fout opgetreden bij uw registratie. Neem contact op met de beheerder.');

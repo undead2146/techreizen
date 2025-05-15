@@ -3,31 +3,17 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Mail\PasswordResetMail;
-use App\Models\Traveller;
 use App\Models\User;
+use App\Models\Traveller;
 use Illuminate\Foundation\Auth\SendsPasswordResetEmails;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 
 class ForgotPasswordController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Password Reset Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller is responsible for handling password reset emails and
-    | includes a trait which assists in sending these notifications from
-    | your application to your users. Feel free to explore this trait.
-    |
-    */
-
     use SendsPasswordResetEmails;
 
     /**
@@ -51,56 +37,56 @@ class ForgotPasswordController extends Controller
         $this->validateEmail($request);
 
         try {
-            // Find the user by their student number/login from users table
+            // Find the user by their student number/login 
             $user = User::where('login', $request->login)->first();
 
-            \Log::info('Looking for user with login: ' . $request->login);
-
             if (!$user) {
-                \Log::info('No user found with login: ' . $request->login);
+                Log::notice('Password reset request for non-existent user: ' . $request->login);
                 return back()->withErrors([
                     'login' => ['We kunnen geen gebruiker vinden met dit studentnummer.'],
                 ]);
             }
 
-            \Log::info('Found user: ' . $user->id);
-
             // Find the traveller record for this user to get their email
             $traveller = Traveller::where('user_id', $user->id)->first();
-            $email = null;
-
-            if ($traveller && !empty($traveller->email)) {
-                $email = $traveller->email;
-                \Log::info('Using email from traveller record: ' . $email);
-            } else {
-                \Log::info('No traveller email found for user: ' . $user->id);
+            
+            if (!$traveller || empty($traveller->email)) {
+                Log::notice('Password reset request for user without email: ' . $user->id);
                 return back()->withErrors([
                     'login' => ['We kunnen geen e-mailadres vinden dat gekoppeld is aan dit studentnummer.'],
                 ]);
             }
-
-            // Generate a new password
-            $newPassword = Str::random(10);
-
-            // Update the user's password
-            $user->password = Hash::make($newPassword);
-            $user->save();
-
+            
+            $email = $traveller->email;
+            
+            // Generate a token manually
+            $token = Str::random(64);
+            
+            // Store the token in the password_reset_tokens table
+            DB::table('password_reset_tokens')->updateOrInsert(
+                ['email' => $email],
+                ['email' => $email, 'token' => $token, 'created_at' => now()]
+            );
+            
+            // Create the reset URL
+            $resetUrl = url(route('password.reset', [
+                'token' => $token,
+                'email' => $email,
+            ], false));
+            
+            // Send custom reset email with URL
+            \Mail::to($email)->send(new \App\Mail\PasswordResetMail($user, null, $resetUrl));
+            
             // Create masked email for display
             $maskedEmail = $this->maskEmail($email);
-
-            // Send an email with the new password
-            \Log::info("Password reset for user {$user->login}: New password is {$newPassword}");
-            Mail::to($email)->send(new PasswordResetMail($user, $newPassword));
-
-            // Redirect to login with success message
+            
+            Log::info('Password reset link sent to user: ' . $user->login);
             return redirect()->route('login')
-                ->with('status', "We hebben een nieuw wachtwoord verstuurd naar {$maskedEmail}. Controleer uw e-mail.");
+                ->with('status', "We hebben een link om uw wachtwoord te herstellen verstuurd naar {$maskedEmail}. Controleer uw e-mail.");
 
         } catch (\Exception $e) {
-            \Log::error('Exception in password reset: ' . $e->getMessage());
-            \Log::error($e->getTraceAsString());
-
+            Log::error('Exception in password reset: ' . $e->getMessage());
+            
             return back()->withErrors([
                 'login' => ['Er is een fout opgetreden bij het herstellen van uw wachtwoord. Probeer het later opnieuw.'],
             ]);

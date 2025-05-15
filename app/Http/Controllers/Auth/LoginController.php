@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
+use App\Models\User;
+
 class LoginController extends Controller
 {
     /*
@@ -74,8 +77,18 @@ class LoginController extends Controller
             'login' => 'required',
             'password' => 'required',
         ]);
-
+        
+        // Check if user exists
+        $user = User::where('login', $input['login'])->first();
+        if (!$user) {
+            Log::notice('Failed login attempt: User not found: ' . $input['login']);
+            return redirect()->route('login')
+                ->with('error', 'Studentnummer of wachtwoord is onjuist.');
+        }
+        
         if (auth()->attempt(array('login' => $input['login'], 'password' => $input['password']))) {
+            Log::info('Login successful for user: ' . $input['login']);
+            
             if (auth()->user()->role == 'traveller') {
                 return redirect()->route('traveller.home');
             } else if (auth()->user()->role == 'guide') {
@@ -88,9 +101,9 @@ class LoginController extends Controller
                 return redirect()->route('home');
             }
         } else {
+            Log::notice('Failed login attempt: Invalid password for user: ' . $input['login']);
             return redirect()->route('login')
                 ->with('error', 'Studentnummer of wachtwoord is onjuist.');
         }
-
     }
 }

@@ -43,10 +43,10 @@
 
                         <!-- HIER CHECKEN OP R, U, B NUMMER -->
                         <div class="row mb-3">
-                            <label for="student_number" class="col-md-4 col-form-label text-md-end">{{ __('Studentnummer*') }}</label>
+                            <label for="student_number" class="col-md-4 col-form-label text-md-end">{{ __('Login nummer*') }}</label>
                             <div class="col-md-6">
                                 <input id="student_number" type="text" class="form-control @error('student_number') is-invalid @enderror" 
-                                       name="student_number" value="{{ old('student_number', $registration->student_number) }}" required>
+                                    name="student_number" value="{{ old('student_number', $registration->student_number) }}" required>
                                 @error('student_number')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
@@ -57,46 +57,49 @@
                             </div>
                         </div>
 
-                        <div class="row mb-3">
-                            <label for="education" class="col-md-4 col-form-label text-md-end">{{ __('Opleiding*') }}</label>
-                            <div class="col-md-6">
-                                <select id="education" class="form-control @error('education') is-invalid @enderror" 
-                                       name="education" required>
-                                    <option value="">-- Selecteer Opleiding --</option>
-                                    @foreach($educations as $education)
-                                        <option value="{{ $education->id }}" {{ old('education', $registration->education) == $education->id ? 'selected' : '' }}>
-                                            {{ $education->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('education')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
+                        <!-- Opleiding Details (worden verborgen als studentnummer niet met 'r' begint) -->
+                        <div id="education-fields" style="display: none;">
+                            <div class="row mb-3">
+                                <label for="education" class="col-md-4 col-form-label text-md-end">{{ __('Opleiding*') }}</label>
+                                <div class="col-md-6">
+                                    <select id="education" class="form-control @error('education') is-invalid @enderror" 
+                                        name="education">
+                                        <option value="">-- Selecteer Opleiding --</option>
+                                        @foreach($educations as $education)
+                                            <option value="{{ $education->id }}" {{ old('education', $registration->education) == $education->id ? 'selected' : '' }}>
+                                                {{ $education->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('education')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <label for="major" class="col-md-4 col-form-label text-md-end">{{ __('Afstudeerrichting*') }}</label>
+                                <div class="col-md-6">
+                                    <select id="major" class="form-control @error('major') is-invalid @enderror" 
+                                        name="major">
+                                        <option value="">-- Selecteer Afstudeerrichting --</option>
+                                        @foreach($majors as $major)
+                                            <option value="{{ $major->name }}" {{ old('major', $registration->major) == $major->name ? 'selected' : '' }}>
+                                                {{ $major->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('major')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
+                                </div>
                             </div>
                         </div>
 
-                        <div class="row mb-3">
-                            <label for="major" class="col-md-4 col-form-label text-md-end">{{ __('Afstudeerrichting*') }}</label>
-                            <div class="col-md-6">
-                                <select id="major" class="form-control @error('major') is-invalid @enderror" 
-                                       name="major" required>
-                                    <option value="">-- Selecteer Afstudeerrichting --</option>
-                                    @foreach($majors as $major)
-                                        <option value="{{ $major->name }}" {{ old('major', $registration->major) == $major->name ? 'selected' : '' }}>
-                                            {{ $major->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('major')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-                        
                         <div class="row mb-0">
                             <div class="col-md-6 offset-md-4">
                                 <button type="submit" class="btn btn-primary">
@@ -104,6 +107,29 @@
                                 </button>
                             </div>
                         </div>
+
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function () {
+                                const studentNumberInput = document.getElementById('student_number');
+                                const educationFields = document.getElementById('education-fields');
+
+                                // Functie om velden te tonen of te verbergen
+                                function toggleEducationFields() {
+                                    const studentNumber = studentNumberInput.value.trim().toLowerCase();
+                                    if (studentNumber.startsWith('r')) {
+                                        educationFields.style.display = 'block'; // Toon velden
+                                    } else {
+                                        educationFields.style.display = 'none'; // Verberg velden
+                                    }
+                                }
+
+                                // Controleer bij het laden van de pagina
+                                toggleEducationFields();
+
+                                // Controleer bij elke wijziging in het studentnummer
+                                studentNumberInput.addEventListener('input', toggleEducationFields);
+                            });
+                        </script>
                     </form>
                 </div>
             </div>
